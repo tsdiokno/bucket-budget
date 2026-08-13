@@ -60,7 +60,7 @@ export const QuickTransferModal: React.FC<QuickTransferModalProps> = ({
               Source Bucket
             </label>
             <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-900">
-              {sourceBucket.name} (Available: ${sourceBucket.allocated.toFixed(2)})
+              {sourceBucket.name} (Available: {sourceBucket.allocated.toFixed(2)})
             </div>
           </div>
 
@@ -76,7 +76,7 @@ export const QuickTransferModal: React.FC<QuickTransferModalProps> = ({
             >
               {flatList.map((item) => (
                 <option key={item.node.id} value={item.node.id}>
-                  {item.pathName} (${item.node.allocated.toFixed(2)})
+                  {item.pathName} ({item.node.allocated.toFixed(2)})
                 </option>
               ))}
             </select>
@@ -84,14 +84,21 @@ export const QuickTransferModal: React.FC<QuickTransferModalProps> = ({
 
           <div>
             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-              Transfer Amount ($)
+              Transfer Amount
             </label>
             <input
               type="number"
-              step="0.01"
+              step="any"
+              min="0"
+              placeholder="0"
               max={sourceBucket.allocated}
               value={transferAmount}
               onChange={(e) => setTransferAmount(e.target.value)}
+              onBlur={() => {
+                if (transferAmount.trim() === '' || isNaN(parseFloat(transferAmount))) {
+                  setTransferAmount('0');
+                }
+              }}
               className="w-full text-sm font-bold text-slate-900 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
               required
             />

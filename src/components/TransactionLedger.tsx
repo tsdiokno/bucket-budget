@@ -124,13 +124,19 @@ export const TransactionLedger: React.FC<TransactionLedgerProps> = ({
               />
             </div>
             <div>
-              <label className="block text-[11px] font-bold text-slate-600 mb-1">Amount ($)</label>
+              <label className="block text-[11px] font-bold text-slate-600 mb-1">Amount</label>
               <input
                 type="number"
-                step="0.01"
+                step="any"
+                min="0"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="e.g. 45.20"
+                onBlur={() => {
+                  if (amount.trim() === '' || isNaN(parseFloat(amount))) {
+                    setAmount('0');
+                  }
+                }}
+                placeholder="0"
                 className="w-full text-xs border border-slate-300 rounded-lg p-1.5 bg-white font-bold text-slate-900"
                 required
               />
@@ -255,7 +261,7 @@ export const TransactionLedger: React.FC<TransactionLedgerProps> = ({
               <div className="flex items-center gap-3 justify-between sm:justify-end">
                 <div className="text-right">
                   <div className="text-sm font-extrabold text-slate-900">
-                    -${tx.amount.toFixed(2)}
+                    -{tx.amount.toFixed(2)}
                   </div>
                   <span className="text-[10px] text-slate-400 font-semibold block">
                     {tx.bucketId ? 'Assigned' : 'Unassigned'}

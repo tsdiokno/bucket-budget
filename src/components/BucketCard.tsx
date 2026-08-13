@@ -10,12 +10,10 @@ import {
   FileText,
   Tag,
   ArrowRightLeft,
-  Move,
   GripVertical,
-  FolderOutput,
   Layers,
   Layers3,
-  Info,
+  VolumeX,
 } from 'lucide-react';
 
 interface BucketCardProps {
@@ -26,6 +24,7 @@ interface BucketCardProps {
   onOpenInspector: (node: BucketNode) => void;
   onAddChildBucket: (parentNode: BucketNode) => void;
   onDeleteBucket: (id: string) => void;
+  onToggleMuteBucket: (id: string) => void;
   onQuickUpdateAllocation: (id: string, newAllocated: number) => void;
   onQuickUpdateFee: (id: string, newFee: number) => void;
   onQuickUpdateName: (id: string, newName: string) => void;
@@ -43,6 +42,7 @@ export const BucketCard: React.FC<BucketCardProps> = ({
   onOpenInspector,
   onAddChildBucket,
   onDeleteBucket,
+  onToggleMuteBucket,
   onQuickUpdateAllocation,
   onQuickUpdateFee,
   onQuickUpdateName,
@@ -53,9 +53,28 @@ export const BucketCard: React.FC<BucketCardProps> = ({
 }) => {
   const [dropPosition, setDropPosition] = useState<'before' | 'inside' | 'after' | null>(null);
   const [isEditingName, setIsEditingName] = useState(false);
+  const [prevNodeProps, setPrevNodeProps] = useState({ name: node.name, fee: node.fee, allocated: node.allocated });
   const [nameInput, setNameInput] = useState(node.name);
   const [feeInput, setFeeInput] = useState((node.fee || 0).toString());
   const [allocInput, setAllocInput] = useState((node.allocated || 0).toString());
+
+  // Adjust local input states during render if external props change
+  if (
+    prevNodeProps.name !== node.name ||
+    prevNodeProps.fee !== node.fee ||
+    prevNodeProps.allocated !== node.allocated
+  ) {
+    setPrevNodeProps({ name: node.name, fee: node.fee, allocated: node.allocated });
+    if (!isEditingName && node.name !== nameInput) {
+      setNameInput(node.name);
+    }
+    if ((node.fee || 0) !== (prevNodeProps.fee || 0)) {
+      setFeeInput((node.fee || 0).toString());
+    }
+    if ((node.allocated || 0) !== (prevNodeProps.allocated || 0)) {
+      setAllocInput((node.allocated || 0).toString());
+    }
+  }
 
   // Clear drop indicators when any drag operation ends globally
   useEffect(() => {
@@ -172,7 +191,9 @@ export const BucketCard: React.FC<BucketCardProps> = ({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={`rounded-xl transition-all duration-200 border text-left ${
-          isLevel1
+          node.isMuted
+            ? 'bg-slate-100/90 border-dashed border-amber-300 opacity-75'
+            : isLevel1
             ? 'bg-white border-slate-200 shadow-xs p-4 my-3'
             : isLevel2
             ? 'bg-slate-50/80 border-slate-200/90 p-3.5 my-2.5 ml-3 sm:ml-5'
@@ -216,7 +237,9 @@ export const BucketCard: React.FC<BucketCardProps> = ({
           {/* Level Badge Icon */}
           <div
             className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 font-medium ${
-              isLevel1
+              node.isMuted
+                ? 'bg-amber-100 text-amber-800'
+                : isLevel1
                 ? 'bg-slate-900 text-emerald-400'
                 : isLevel2
                 ? 'bg-emerald-100 text-emerald-800'
@@ -226,7 +249,7 @@ export const BucketCard: React.FC<BucketCardProps> = ({
             {isLevel1 ? <Layers className="w-3.5 h-3.5" /> : isLevel2 ? <Layers3 className="w-3.5 h-3.5" /> : <Tag className="w-3.5 h-3.5" />}
           </div>
 
-          {/* Editable Name & Prominent Note Chip */}
+          {/* Editable Name & Notes */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               {isEditingName ? (
@@ -254,7 +277,7 @@ export const BucketCard: React.FC<BucketCardProps> = ({
                   onDoubleClick={() => setIsEditingName(true)}
                   className={`font-bold truncate text-slate-900 cursor-pointer hover:text-emerald-700 transition-colors ${
                     isLevel1 ? 'text-base' : isLevel2 ? 'text-sm' : 'text-xs'
-                  }`}
+                  } ${node.isMuted ? 'line-through text-slate-500' : ''}`}
                   title="Double-click to edit name"
                 >
                   {node.name}
@@ -264,10 +287,17 @@ export const BucketCard: React.FC<BucketCardProps> = ({
               <span className="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">
                 {levelBadgeLabel}
               </span>
+
+              {node.isMuted && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full">
+                  <VolumeX className="w-3 h-3 text-amber-700" />
+                  Muted
+                </span>
+              )}
             </div>
 
-            {/* Dedicated Block Display Slot for Notes Component */}
-            {node.notes && (
+            {/* Dedicated Block Display Slot for Notes Component - ONLY if notes exist */}
+            {Boolean(node.notes && node.notes.trim().length > 0) && (
               <div className="block w-full mt-2 relative group">
                 <div
                   className="inline-flex items-center gap-1.5 max-w-full px-2.5 py-1 rounded-lg bg-amber-50/90 hover:bg-amber-100/90 border border-amber-200/90 text-amber-950 text-xs font-medium cursor-help transition-colors shadow-2xs"
@@ -307,15 +337,25 @@ export const BucketCard: React.FC<BucketCardProps> = ({
 
             {!hasChildren ? (
               <div className="flex items-center gap-1 justify-end">
-                <span className="text-xs font-bold text-slate-400">$</span>
                 <input
                   type="number"
+                  step="any"
+                  min="0"
+                  placeholder="0"
                   value={allocInput}
-                  onChange={(e) => setAllocInput(e.target.value)}
+                  onChange={(e) => {
+                    const valStr = e.target.value;
+                    setAllocInput(valStr);
+                    const val = parseFloat(valStr);
+                    onQuickUpdateAllocation(node.id, !isNaN(val) && val >= 0 ? val : 0);
+                  }}
                   onBlur={() => {
                     const val = parseFloat(allocInput);
-                    if (!isNaN(val) && val >= 0) {
-                      onQuickUpdateAllocation(node.id, val);
+                    if (isNaN(val) || val < 0 || allocInput.trim() === '') {
+                      setAllocInput('0');
+                      onQuickUpdateAllocation(node.id, 0);
+                    } else {
+                      setAllocInput(val.toString());
                     }
                   }}
                   className="w-20 text-right text-xs font-bold text-emerald-800 bg-white border border-slate-300 rounded px-1.5 py-0.5 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
@@ -323,7 +363,7 @@ export const BucketCard: React.FC<BucketCardProps> = ({
               </div>
             ) : (
               <div className="text-sm font-extrabold text-emerald-800">
-                ${totals.allocatedTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                {totals.allocatedTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </div>
             )}
           </div>
@@ -334,19 +374,28 @@ export const BucketCard: React.FC<BucketCardProps> = ({
               Dedicated Fee
             </span>
             <div className="flex items-center gap-1 justify-end">
-              <span className="text-xs font-semibold text-slate-400">$</span>
               <input
                 type="number"
+                step="any"
+                min="0"
+                placeholder="0"
                 value={feeInput}
-                onChange={(e) => setFeeInput(e.target.value)}
+                onChange={(e) => {
+                  const valStr = e.target.value;
+                  setFeeInput(valStr);
+                  const val = parseFloat(valStr);
+                  onQuickUpdateFee(node.id, !isNaN(val) && val >= 0 ? val : 0);
+                }}
                 onBlur={() => {
                   const val = parseFloat(feeInput);
-                  if (!isNaN(val) && val >= 0) {
-                    onQuickUpdateFee(node.id, val);
+                  if (isNaN(val) || val < 0 || feeInput.trim() === '') {
+                    setFeeInput('0');
+                    onQuickUpdateFee(node.id, 0);
+                  } else {
+                    setFeeInput(val.toString());
                   }
                 }}
                 className="w-16 text-right text-xs font-medium text-amber-800 bg-white border border-slate-300 rounded px-1.5 py-0.5 focus:ring-1 focus:ring-amber-500 focus:outline-none"
-                placeholder="0.00"
               />
             </div>
           </div>
@@ -366,6 +415,19 @@ export const BucketCard: React.FC<BucketCardProps> = ({
                 </span>
               </button>
             )}
+
+            {/* Quick Mute Toggle */}
+            <button
+              onClick={() => onToggleMuteBucket(node.id)}
+              className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+                node.isMuted
+                  ? 'text-amber-700 bg-amber-100 hover:bg-amber-200'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/70'
+              }`}
+              title={node.isMuted ? 'Unmute bucket (include in calculations)' : 'Mute bucket (exclude from calculations)'}
+            >
+              <VolumeX className="w-3.5 h-3.5" />
+            </button>
 
             {/* Quick Transfer Funds */}
             <button
@@ -410,6 +472,7 @@ export const BucketCard: React.FC<BucketCardProps> = ({
               onOpenInspector={onOpenInspector}
               onAddChildBucket={onAddChildBucket}
               onDeleteBucket={onDeleteBucket}
+              onToggleMuteBucket={onToggleMuteBucket}
               onQuickUpdateAllocation={onQuickUpdateAllocation}
               onQuickUpdateFee={onQuickUpdateFee}
               onQuickUpdateName={onQuickUpdateName}

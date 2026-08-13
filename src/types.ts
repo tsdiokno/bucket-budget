@@ -8,6 +8,7 @@ export interface BucketNode {
   allocated: number; // Current funds allocated into this bucket
   fee: number; // Dedicated fee input for this bucket
   notes: string; // Memos / notes
+  isMuted?: boolean; // Mute state: true = exclude from calculations
   color?: string; // Optional custom color badge
   icon?: string; // Lucide icon identifier
   children?: BucketNode[];

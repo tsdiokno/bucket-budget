@@ -4,14 +4,8 @@ import { flattenBuckets, isDescendant } from '../utils/budgetCalculations';
 import {
   X,
   Save,
-  DollarSign,
   FileText,
-  Sliders,
-  Layers,
-  CheckCircle2,
-  AlertCircle,
-  Hash,
-  FolderTree,
+  VolumeX,
 } from 'lucide-react';
 
 interface BucketModalProps {
@@ -33,19 +27,23 @@ export const BucketModal: React.FC<BucketModalProps> = ({
 }) => {
   if (!isOpen || !node) return null;
 
+  const [prevNodeId, setPrevNodeId] = useState(node.id);
   const [name, setName] = useState(node.name);
   const [notes, setNotes] = useState(node.notes || '');
-  const [fee, setFee] = useState(node.fee || 0);
-  const [allocated, setAllocated] = useState(node.allocated || 0);
+  const [feeInput, setFeeInput] = useState((node.fee ?? 0).toString());
+  const [allocatedInput, setAllocatedInput] = useState((node.allocated ?? 0).toString());
+  const [isMuted, setIsMuted] = useState(!!node.isMuted);
   const [selectedParentId, setSelectedParentId] = useState<string>(node.parentId || '');
 
-  useEffect(() => {
+  if (node.id !== prevNodeId) {
+    setPrevNodeId(node.id);
     setName(node.name);
     setNotes(node.notes || '');
-    setFee(node.fee || 0);
-    setAllocated(node.allocated || 0);
+    setFeeInput((node.fee ?? 0).toString());
+    setAllocatedInput((node.allocated ?? 0).toString());
+    setIsMuted(!!node.isMuted);
     setSelectedParentId(node.parentId || '');
-  }, [node]);
+  }
 
   // Available parent options (exclude self, descendants, and level 3 buckets)
   const flattened = flattenBuckets(allBuckets);
@@ -65,12 +63,16 @@ export const BucketModal: React.FC<BucketModalProps> = ({
       onMoveBucket(node.id, selectedParentId === '' ? null : selectedParentId);
     }
 
+    const parsedAllocated = parseFloat(allocatedInput);
+    const parsedFee = parseFloat(feeInput);
+
     const updated: BucketNode = {
       ...node,
       name: name.trim() || 'Untitled Bucket',
       notes: notes.trim(),
-      fee: Math.max(0, Number(fee) || 0),
-      allocated: Math.max(0, Number(allocated) || 0),
+      fee: !isNaN(parsedFee) && parsedFee >= 0 ? parsedFee : 0,
+      allocated: !isNaN(parsedAllocated) && parsedAllocated >= 0 ? parsedAllocated : 0,
+      isMuted,
     };
 
     onSave(updated);
@@ -145,40 +147,69 @@ export const BucketModal: React.FC<BucketModalProps> = ({
             {/* Current Allocated */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Current Allocated ($)
+                Current Allocated Amount
               </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">$</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={allocated}
-                  onChange={(e) => setAllocated(Number(e.target.value))}
-                  className="w-full pl-7 pr-3 py-1.5 text-xs font-bold text-emerald-800 bg-emerald-50/50 border border-emerald-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                />
-              </div>
+              <input
+                type="number"
+                step="any"
+                min="0"
+                value={allocatedInput}
+                onChange={(e) => setAllocatedInput(e.target.value)}
+                onBlur={() => {
+                  if (allocatedInput.trim() === '' || isNaN(parseFloat(allocatedInput))) {
+                    setAllocatedInput('0');
+                  }
+                }}
+                className="w-full px-3 py-1.5 text-xs font-bold text-emerald-800 bg-emerald-50/50 border border-emerald-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                placeholder="0"
+              />
             </div>
 
             {/* Dedicated Fee */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Dedicated Fee ($)
+                Dedicated Fee
               </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">$</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={fee}
-                  onChange={(e) => setFee(Number(e.target.value))}
-                  className="w-full pl-7 pr-3 py-1.5 text-xs font-bold text-amber-800 bg-amber-50/50 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none"
-                  placeholder="0.00"
-                />
-              </div>
+              <input
+                type="number"
+                step="any"
+                min="0"
+                value={feeInput}
+                onChange={(e) => setFeeInput(e.target.value)}
+                onBlur={() => {
+                  if (feeInput.trim() === '' || isNaN(parseFloat(feeInput))) {
+                    setFeeInput('0');
+                  }
+                }}
+                className="w-full px-3 py-1.5 text-xs font-bold text-amber-800 bg-amber-50/50 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                placeholder="0"
+              />
               <p className="text-[10px] text-slate-400 mt-1">
                 ACH / Portal convenience charge
               </p>
             </div>
+          </div>
+
+          {/* Mute Toggle Section */}
+          <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-slate-200 text-slate-600">
+                <VolumeX className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-slate-800 block">Mute Bucket</span>
+                <span className="text-[11px] text-slate-500 block">Temporarily exclude this bucket from all calculations</span>
+              </div>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isMuted}
+                onChange={(e) => setIsMuted(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+            </label>
           </div>
 
           {/* Notes Row */}

@@ -47,7 +47,15 @@ export const HeaderPoolBar: React.FC<HeaderPoolBarProps> = ({
   unassignedCount,
 }) => {
   const [isEditingPool, setIsEditingPool] = useState(false);
+  const [prevTotalPool, setPrevTotalPool] = useState(totals.totalPool);
   const [poolInput, setPoolInput] = useState(totals.totalPool.toString());
+
+  if (totals.totalPool !== prevTotalPool) {
+    setPrevTotalPool(totals.totalPool);
+    if (!isEditingPool) {
+      setPoolInput(totals.totalPool.toString());
+    }
+  }
   const [showTooltip, setShowTooltip] = useState(false);
   const [showDataMenu, setShowDataMenu] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -251,29 +259,40 @@ export const HeaderPoolBar: React.FC<HeaderPoolBarProps> = ({
 
               {isEditingPool ? (
                 <div className="flex items-center gap-1 mt-1">
-                  <span className="text-sm font-bold text-slate-700">$</span>
                   <input
                     type="number"
+                    step="any"
+                    min="0"
+                    placeholder="0"
                     value={poolInput}
-                    onChange={(e) => setPoolInput(e.target.value)}
+                    onChange={(e) => {
+                      const valStr = e.target.value;
+                      setPoolInput(valStr);
+                      const parsed = parseFloat(valStr);
+                      onUpdateTotalPool(!isNaN(parsed) && parsed >= 0 ? parsed : 0);
+                    }}
+                    onBlur={() => {
+                      const parsed = parseFloat(poolInput);
+                      if (isNaN(parsed) || parsed < 0 || poolInput.trim() === '') {
+                        setPoolInput('0');
+                        onUpdateTotalPool(0);
+                      } else {
+                        setPoolInput(parsed.toString());
+                      }
+                      setIsEditingPool(false);
+                    }}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleSavePool();
+                      if (e.key === 'Enter') setIsEditingPool(false);
                       if (e.key === 'Escape') setIsEditingPool(false);
                     }}
                     className="w-full text-base font-bold text-slate-900 border border-emerald-400 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     autoFocus
                   />
                   <button
-                    onClick={handleSavePool}
+                    onClick={() => setIsEditingPool(false)}
                     className="p-1 bg-emerald-600 text-white rounded hover:bg-emerald-700"
                   >
                     <Check className="w-3 h-3" />
-                  </button>
-                  <button
-                    onClick={() => setIsEditingPool(false)}
-                    className="p-1 bg-slate-200 text-slate-600 rounded hover:bg-slate-300"
-                  >
-                    <X className="w-3 h-3" />
                   </button>
                 </div>
               ) : (
@@ -285,7 +304,7 @@ export const HeaderPoolBar: React.FC<HeaderPoolBarProps> = ({
                   className="text-lg font-extrabold text-slate-900 mt-0.5 cursor-pointer hover:text-emerald-700 transition-colors"
                   title="Click to edit pool amount"
                 >
-                  ${totals.totalPool.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  {totals.totalPool.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </div>
               )}
             </div>
@@ -296,7 +315,7 @@ export const HeaderPoolBar: React.FC<HeaderPoolBarProps> = ({
                 Total Allocated
               </div>
               <div className="text-lg font-bold text-emerald-700 mt-0.5">
-                ${totals.totalAllocated.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                {totals.totalAllocated.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </div>
             </div>
 
@@ -318,7 +337,7 @@ export const HeaderPoolBar: React.FC<HeaderPoolBarProps> = ({
                 </div>
               </div>
               <div className="text-lg font-bold text-amber-700 mt-0.5">
-                ${totals.totalFees.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                {totals.totalFees.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </div>
             </div>
 
@@ -337,7 +356,7 @@ export const HeaderPoolBar: React.FC<HeaderPoolBarProps> = ({
                 {isOverAllocated && <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />}
               </div>
               <div className={`text-lg font-extrabold mt-0.5 ${isOverAllocated ? 'text-rose-700' : 'text-emerald-700'}`}>
-                ${totals.unallocatedPool.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                {totals.unallocatedPool.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </div>
             </div>
           </div>
@@ -363,17 +382,17 @@ export const HeaderPoolBar: React.FC<HeaderPoolBarProps> = ({
               <div
                 style={{ width: `${allocatedPct}%` }}
                 className="bg-emerald-600 h-full transition-all duration-300"
-                title={`Allocated: $${totals.totalAllocated.toFixed(2)}`}
+                title={`Allocated: ${totals.totalAllocated.toFixed(2)}`}
               />
               <div
                 style={{ width: `${feePct}%` }}
                 className="bg-amber-500 h-full transition-all duration-300"
-                title={`Dedicated Fees: $${totals.totalFees.toFixed(2)}`}
+                title={`Dedicated Fees: ${totals.totalFees.toFixed(2)}`}
               />
               <div
                 style={{ width: `${unallocatedPct}%` }}
                 className={`h-full transition-all duration-300 ${isOverAllocated ? 'bg-rose-500' : 'bg-slate-300'}`}
-                title={`Unallocated: $${totals.unallocatedPool.toFixed(2)}`}
+                title={`Unallocated: ${totals.unallocatedPool.toFixed(2)}`}
               />
             </div>
           </div>

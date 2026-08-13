@@ -10,6 +10,7 @@ interface BucketTreeProps {
   onAddChildBucket: (parentNode: BucketNode) => void;
   onAddRootBucket: () => void;
   onDeleteBucket: (id: string) => void;
+  onToggleMuteBucket: (id: string) => void;
   onQuickUpdateAllocation: (id: string, newAllocated: number) => void;
   onQuickUpdateFee: (id: string, newFee: number) => void;
   onQuickUpdateName: (id: string, newName: string) => void;
@@ -26,6 +27,7 @@ export const BucketTree: React.FC<BucketTreeProps> = ({
   onAddChildBucket,
   onAddRootBucket,
   onDeleteBucket,
+  onToggleMuteBucket,
   onQuickUpdateAllocation,
   onQuickUpdateFee,
   onQuickUpdateName,
@@ -189,6 +191,7 @@ export const BucketTree: React.FC<BucketTreeProps> = ({
               onOpenInspector={onOpenInspector}
               onAddChildBucket={onAddChildBucket}
               onDeleteBucket={onDeleteBucket}
+              onToggleMuteBucket={onToggleMuteBucket}
               onQuickUpdateAllocation={onQuickUpdateAllocation}
               onQuickUpdateFee={onQuickUpdateFee}
               onQuickUpdateName={onQuickUpdateName}

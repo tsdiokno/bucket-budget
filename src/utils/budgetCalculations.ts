@@ -50,6 +50,14 @@ export function calculateBucketTotals(
   allocatedTotal: number;
   feeTotal: number;
 } {
+  // If node is muted, exclude it completely from budget calculations
+  if (node.isMuted) {
+    return {
+      allocatedTotal: 0,
+      feeTotal: 0,
+    };
+  }
+
   // If node has children, its totals are the sum of children's totals
   if (node.children && node.children.length > 0) {
     let allocatedTotal = 0;
@@ -61,17 +69,23 @@ export function calculateBucketTotals(
       feeTotal += childTotals.feeTotal;
     });
 
-    // Add node's own direct fee if present
-    feeTotal += node.fee || 0;
+    // Add node's own direct fee if allocatedTotal > 0 (fee excluded if amount is zero)
+    if (allocatedTotal > 0 && node.fee) {
+      feeTotal += node.fee;
+    }
 
     return {
       allocatedTotal,
       feeTotal,
     };
   } else {
+    const allocatedTotal = node.allocated || 0;
+    // Exclude dedicated fee if allocated amount is zero
+    const feeTotal = allocatedTotal > 0 ? (node.fee || 0) : 0;
+
     return {
-      allocatedTotal: node.allocated || 0,
-      feeTotal: node.fee || 0,
+      allocatedTotal,
+      feeTotal,
     };
   }
 }

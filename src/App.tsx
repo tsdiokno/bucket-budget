@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   BucketNode,
   Transaction,
@@ -72,9 +72,14 @@ export default function App() {
     };
   }, [data]);
 
+  const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const showToast = (msg: string) => {
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
     setToastMessage(msg);
-    setTimeout(() => {
+    toastTimerRef.current = setTimeout(() => {
       setToastMessage(null);
     }, 3500);
   };
@@ -110,7 +115,21 @@ export default function App() {
   // Pool handlers
   const handleUpdateTotalPool = (newPool: number) => {
     setData((prev) => ({ ...prev, totalPool: newPool }));
-    showToast(`Master Cash Pool updated to $${newPool.toLocaleString()}`);
+  };
+
+  // Mute bucket toggle handler
+  const handleToggleMuteBucket = (id: string) => {
+    setData((prev) => ({
+      ...prev,
+      buckets: updateBucketInTree(prev.buckets, id, (node) => ({
+        ...node,
+        isMuted: !node.isMuted,
+      })),
+    }));
+    const node = findBucketById(data.buckets, id);
+    if (node) {
+      showToast(`${node.isMuted ? 'Unmuted' : 'Muted'} bucket "${node.name}"`);
+    }
   };
 
   // Bucket updates
@@ -297,7 +316,7 @@ export default function App() {
       return { ...prev, buckets: updated };
     });
 
-    showToast(`Reallocated $${transferVal.toFixed(2)} from "${sourceNode.name}" to "${targetNode.name}"`);
+    showToast(`Reallocated ${transferVal.toFixed(2)} from "${sourceNode.name}" to "${targetNode.name}"`);
   };
 
   // Transaction ledger handlers
@@ -319,7 +338,7 @@ export default function App() {
       ...prev,
       transactions: [created, ...prev.transactions],
     }));
-    showToast(`Added transaction "${created.merchant}" ($${created.amount})`);
+    showToast(`Added transaction "${created.merchant}" (${created.amount})`);
   };
 
   const handleDeleteTransaction = (id: string) => {
@@ -398,6 +417,7 @@ export default function App() {
                 onAddChildBucket={handleAddChildBucket}
                 onAddRootBucket={handleAddRootBucket}
                 onDeleteBucket={handleDeleteBucket}
+                onToggleMuteBucket={handleToggleMuteBucket}
                 onQuickUpdateAllocation={handleQuickUpdateAllocation}
                 onQuickUpdateFee={handleQuickUpdateFee}
                 onQuickUpdateName={handleQuickUpdateName}
@@ -443,7 +463,7 @@ export default function App() {
                       >
                         <div className="flex items-center justify-between font-bold text-slate-900">
                           <span className="truncate max-w-[120px]">{tx.merchant}</span>
-                          <span className="text-amber-800">-${tx.amount.toFixed(2)}</span>
+                          <span className="text-amber-800">-{tx.amount.toFixed(2)}</span>
                         </div>
                         <p className="text-[10px] text-slate-500 truncate">{tx.description}</p>
                       </div>
