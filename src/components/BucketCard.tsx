@@ -8,7 +8,6 @@ import {
   Edit3,
   Trash2,
   FileText,
-  Zap,
   Tag,
   ArrowRightLeft,
   Move,
@@ -57,7 +56,6 @@ export const BucketCard: React.FC<BucketCardProps> = ({
   const [nameInput, setNameInput] = useState(node.name);
   const [feeInput, setFeeInput] = useState((node.fee || 0).toString());
   const [allocInput, setAllocInput] = useState((node.allocated || 0).toString());
-  const [showNoteBanner, setShowNoteBanner] = useState(false);
 
   // Clear drop indicators when any drag operation ends globally
   useEffect(() => {
@@ -212,7 +210,7 @@ export const BucketCard: React.FC<BucketCardProps> = ({
               {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
             </button>
           ) : (
-            <span className="w-6 text-center text-slate-300">•</span>
+            <span className="w-6"></span>
           )}
 
           {/* Level Badge Icon */}
@@ -266,35 +264,24 @@ export const BucketCard: React.FC<BucketCardProps> = ({
               <span className="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">
                 {levelBadgeLabel}
               </span>
-
-              {/* Auto Rule Indicator */}
-              {node.autoRule && node.autoRule.enabled && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-md">
-                  <Zap className="w-3 h-3" />
-                  Auto Rule
-                </span>
-              )}
             </div>
 
             {/* Dedicated Block Display Slot for Notes Component */}
             {node.notes && (
               <div className="block w-full mt-2 relative group">
-                <button
-                  type="button"
-                  onClick={() => setShowNoteBanner(!showNoteBanner)}
-                  className="inline-flex items-center gap-1.5 max-w-full px-2.5 py-1 rounded-lg bg-amber-50/90 hover:bg-amber-100/90 border border-amber-200/90 text-amber-950 text-xs font-medium cursor-pointer transition-colors shadow-2xs"
-                  title="Hover for quick tooltip • Click to toggle full block memo"
+                <div
+                  className="inline-flex items-center gap-1.5 max-w-full px-2.5 py-1 rounded-lg bg-amber-50/90 hover:bg-amber-100/90 border border-amber-200/90 text-amber-950 text-xs font-medium cursor-help transition-colors shadow-2xs"
                 >
                   <FileText className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                   <span className="block truncate max-w-[220px] sm:max-w-[340px] font-medium text-amber-900">
                     {node.notes}
                   </span>
                   <span className="text-[10px] font-semibold bg-amber-200/80 text-amber-800 px-1.5 py-0.2 rounded-full shrink-0 group-hover:bg-amber-300/80 transition-colors">
-                    {showNoteBanner ? 'Hide Memo' : 'Note'}
+                    Note
                   </span>
-                </button>
+                </div>
 
-                {/* Pure CSS Non-Blocking Hover Tooltip (Zero JS state changes, zero layout-shift flickering) */}
+                {/* Pure CSS Non-Blocking Hover Tooltip */}
                 <div className="pointer-events-none absolute left-0 top-full mt-1.5 w-72 p-3 bg-slate-900/95 backdrop-blur-xs text-slate-100 rounded-xl shadow-xl text-xs z-50 border border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150">
                   <div className="flex items-center gap-1.5 font-bold text-amber-400 mb-1 border-b border-slate-800 pb-1.5">
                     <FileText className="w-3.5 h-3.5" />
@@ -375,19 +362,8 @@ export const BucketCard: React.FC<BucketCardProps> = ({
               >
                 <Plus className="w-3 h-3" />
                 <span className="hidden sm:inline">
-                  {node.level === 1 ? '+ Sub' : '+ Sub-Sub'}
+                  + Sub
                 </span>
-              </button>
-            )}
-
-            {/* Promote to Top-Level Root Bucket */}
-            {(node.parentId || node.level > 1) && (
-              <button
-                onClick={() => onMoveBucket(node.id, null)}
-                className="p-1.5 text-slate-500 hover:text-indigo-700 hover:bg-slate-200/70 rounded-md transition-colors cursor-pointer"
-                title="Promote bucket to Top-Level Root"
-              >
-                <FolderOutput className="w-3.5 h-3.5" />
               </button>
             )}
 
@@ -419,21 +395,6 @@ export const BucketCard: React.FC<BucketCardProps> = ({
             </button>
           </div>
         </div>
-
-        {/* Inline Collapsible Note Banner (Expands on click only, never triggered by hover layout shifts) */}
-        {node.notes && showNoteBanner && (
-          <div className="mt-3 p-3 bg-amber-50/90 border border-amber-200/90 rounded-xl text-xs text-amber-950 flex items-start gap-2.5 shadow-2xs transition-all">
-            <FileText className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <span className="font-bold text-amber-900 block text-[10px] uppercase tracking-wider mb-0.5">
-                Bucket Note & Payment Memo
-              </span>
-              <p className="text-amber-950 leading-relaxed font-normal whitespace-pre-wrap break-words">
-                {node.notes}
-              </p>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Render Nested Child Buckets */}

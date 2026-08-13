@@ -1,12 +1,5 @@
 export type BucketLevel = 1 | 2 | 3;
 
-export interface AutoAllocationRule {
-  enabled: boolean;
-  type: 'fixed' | 'percentage' | 'top_up';
-  value: number; // Dollar amount for fixed/top_up or Percentage (0-100) for percentage
-  frequency: 'monthly' | 'biweekly' | 'weekly';
-}
-
 export interface BucketNode {
   id: string;
   name: string;
@@ -17,7 +10,6 @@ export interface BucketNode {
   notes: string; // Memos / notes
   color?: string; // Optional custom color badge
   icon?: string; // Lucide icon identifier
-  autoRule?: AutoAllocationRule;
   children?: BucketNode[];
 }
 
@@ -38,16 +30,6 @@ export interface VendorRule {
   targetBucketId: string;
   autoApply: boolean;
   bucketName?: string;
-}
-
-export interface RecurringRule {
-  id: string;
-  name: string;
-  targetBucketId: string;
-  type: 'fixed' | 'percentage' | 'top_up';
-  value: number;
-  enabled: boolean;
-  frequency: 'weekly' | 'biweekly' | 'monthly';
 }
 
 export interface BudgetPreset {

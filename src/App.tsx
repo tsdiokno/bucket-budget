@@ -8,7 +8,9 @@ import {
 import {
   loadStoredData,
   saveBudgetData,
-  loadPresetById,
+  exportBudgetData,
+  importBudgetData,
+  resetToDefaultData,
 } from './utils/storage';
 import {
   calculateOverallTotals,
@@ -38,14 +40,42 @@ export default function App() {
   const [data, setData] = useState(() => loadStoredData());
   const [activeTab, setActiveTab] = useState<ActiveTab>('buckets');
   
+  // Autosave status state
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(new Date());
+
   // Modal states
   const [inspectNode, setInspectNode] = useState<BucketNode | null>(null);
   const [transferSourceNode, setTransferSourceNode] = useState<BucketNode | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Auto-save changes to localStorage
+  // Debounced auto-save changes to localStorage (400ms delay)
   useEffect(() => {
-    saveBudgetData(data);
+    setSaveStatus('saving');
+    const timer = setTimeout(() => {
+      const ok = saveBudgetData(data);
+      if (ok) {
+        setSaveStatus('saved');
+        setLastSavedAt(new Date());
+      } else {
+        setSaveStatus('error');
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [data]);
+
+  // Synchronously save pending state when page unloads or loses visibility
+  useEffect(() => {
+    const handleFlushSave = () => {
+      saveBudgetData(data);
+    };
+    window.addEventListener('beforeunload', handleFlushSave);
+    window.addEventListener('pagehide', handleFlushSave);
+    return () => {
+      window.removeEventListener('beforeunload', handleFlushSave);
+      window.removeEventListener('pagehide', handleFlushSave);
+    };
   }, [data]);
 
   const showToast = (msg: string) => {
@@ -55,19 +85,38 @@ export default function App() {
     }, 3500);
   };
 
+  const handleExportData = () => {
+    exportBudgetData(data);
+    showToast('Downloaded budget backup (.json)');
+  };
+
+  const handleImportData = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target?.result as string;
+        const imported = importBudgetData(text);
+        setData(imported);
+        showToast('Successfully restored budget from backup file!');
+      } catch (err: any) {
+        alert(`Import failed: ${err.message || 'Invalid budget JSON file'}`);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleResetData = () => {
+    const reset = resetToDefaultData();
+    setData(reset);
+    showToast('Reset budget to baseline template');
+  };
+
   const totals = calculateOverallTotals(data.totalPool, data.buckets, data.transactions);
 
   // Pool handlers
   const handleUpdateTotalPool = (newPool: number) => {
     setData((prev) => ({ ...prev, totalPool: newPool }));
     showToast(`Master Cash Pool updated to $${newPool.toLocaleString()}`);
-  };
-
-  // Preset switching
-  const handleSelectPreset = (presetId: string) => {
-    const loaded = loadPresetById(presetId);
-    setData(loaded);
-    showToast(`Loaded preset template: "${loaded.activePresetId}"`);
   };
 
   // Bucket updates
@@ -165,13 +214,25 @@ export default function App() {
     const target = findBucketById(data.buckets, id);
     if (!target) return;
 
-    if (window.confirm(`Are you sure you want to delete "${target.name}" and any nested child sub-buckets?`)) {
-      setData((prev) => ({
-        ...prev,
-        buckets: removeBucketFromTree(prev.buckets, id),
-      }));
-      showToast(`Deleted bucket "${target.name}"`);
-    }
+    // Collect all deleted bucket IDs (target + descendants)
+    const deletedIds = new Set<string>();
+    const collectIds = (node: BucketNode) => {
+      deletedIds.add(node.id);
+      node.children?.forEach(collectIds);
+    };
+    collectIds(target);
+
+    // Unassign transactions linked to deleted buckets
+    const updatedTxs = data.transactions.map((tx) =>
+      tx.bucketId && deletedIds.has(tx.bucketId) ? { ...tx, bucketId: null } : tx
+    );
+
+    setData((prev) => ({
+      ...prev,
+      buckets: removeBucketFromTree(prev.buckets, id),
+      transactions: updatedTxs,
+    }));
+    showToast(`Deleted bucket "${target.name}"`);
   };
 
   // Re-parent / Move / Reorder bucket node within tree
@@ -326,10 +387,14 @@ export default function App() {
       <HeaderPoolBar
         totals={totals}
         activePresetId={data.activePresetId}
+        saveStatus={saveStatus}
+        lastSavedAt={lastSavedAt}
         onUpdateTotalPool={handleUpdateTotalPool}
         onOpenAddRootBucket={handleAddRootBucket}
         onOpenAddTransaction={() => setActiveTab('transactions')}
-        onSelectPreset={handleSelectPreset}
+        onExportData={handleExportData}
+        onImportData={handleImportData}
+        onResetData={handleResetData}
         unassignedCount={unassignedTxs.length}
       />
 

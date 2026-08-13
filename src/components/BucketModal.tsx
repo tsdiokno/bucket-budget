@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { BucketNode, AutoAllocationRule } from '../types';
+import { BucketNode } from '../types';
 import { flattenBuckets, isDescendant } from '../utils/budgetCalculations';
 import {
   X,
   Save,
   DollarSign,
   FileText,
-  Zap,
   Sliders,
   Layers,
   CheckCircle2,
@@ -40,34 +39,12 @@ export const BucketModal: React.FC<BucketModalProps> = ({
   const [allocated, setAllocated] = useState(node.allocated || 0);
   const [selectedParentId, setSelectedParentId] = useState<string>(node.parentId || '');
 
-  // Auto rule state
-  const [autoRuleEnabled, setAutoRuleEnabled] = useState(node.autoRule?.enabled || false);
-  const [autoRuleType, setAutoRuleType] = useState<'fixed' | 'percentage' | 'top_up'>(
-    node.autoRule?.type || 'fixed'
-  );
-  const [autoRuleValue, setAutoRuleValue] = useState(node.autoRule?.value || 0);
-  const [autoRuleFreq, setAutoRuleFreq] = useState<'monthly' | 'biweekly' | 'weekly'>(
-    node.autoRule?.frequency || 'monthly'
-  );
-
   useEffect(() => {
     setName(node.name);
     setNotes(node.notes || '');
     setFee(node.fee || 0);
     setAllocated(node.allocated || 0);
     setSelectedParentId(node.parentId || '');
-
-    if (node.autoRule) {
-      setAutoRuleEnabled(node.autoRule.enabled);
-      setAutoRuleType(node.autoRule.type);
-      setAutoRuleValue(node.autoRule.value);
-      setAutoRuleFreq(node.autoRule.frequency);
-    } else {
-      setAutoRuleEnabled(false);
-      setAutoRuleType('fixed');
-      setAutoRuleValue(0);
-      setAutoRuleFreq('monthly');
-    }
   }, [node]);
 
   // Available parent options (exclude self, descendants, and level 3 buckets)
@@ -88,22 +65,12 @@ export const BucketModal: React.FC<BucketModalProps> = ({
       onMoveBucket(node.id, selectedParentId === '' ? null : selectedParentId);
     }
 
-    const updatedAutoRule: AutoAllocationRule | undefined = autoRuleEnabled
-      ? {
-          enabled: true,
-          type: autoRuleType,
-          value: autoRuleValue,
-          frequency: autoRuleFreq,
-        }
-      : undefined;
-
     const updated: BucketNode = {
       ...node,
       name: name.trim() || 'Untitled Bucket',
       notes: notes.trim(),
       fee: Math.max(0, Number(fee) || 0),
       allocated: Math.max(0, Number(allocated) || 0),
-      autoRule: updatedAutoRule,
     };
 
     onSave(updated);
@@ -226,70 +193,6 @@ export const BucketModal: React.FC<BucketModalProps> = ({
               className="w-full text-xs text-slate-800 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
               placeholder="Add account policy numbers, due dates, or payment memos..."
             />
-          </div>
-
-          {/* Automated Allocation Rules Configuration */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-emerald-600" />
-                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                  Automated Recurring Contribution Rule
-                </span>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={autoRuleEnabled}
-                  onChange={(e) => setAutoRuleEnabled(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
-              </label>
-            </div>
-
-            {autoRuleEnabled && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-200">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">Rule Type</label>
-                  <select
-                    value={autoRuleType}
-                    onChange={(e) => setAutoRuleType(e.target.value as any)}
-                    className="w-full text-xs border border-slate-300 rounded-lg p-1.5 focus:outline-none bg-white"
-                  >
-                    <option value="top_up">Top Up to Target Goal</option>
-                    <option value="fixed">Fixed Dollar Amount ($)</option>
-                    <option value="percentage">Percentage of Pool (%)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                    Rule Amount / Value
-                  </label>
-                  <input
-                    type="number"
-                    value={autoRuleValue}
-                    onChange={(e) => setAutoRuleValue(Number(e.target.value))}
-                    className="w-full text-xs border border-slate-300 rounded-lg p-1.5 focus:outline-none bg-white font-bold"
-                    placeholder="Value..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">Cadence</label>
-                  <select
-                    value={autoRuleFreq}
-                    onChange={(e) => setAutoRuleFreq(e.target.value as any)}
-                    className="w-full text-xs border border-slate-300 rounded-lg p-1.5 focus:outline-none bg-white"
-                  >
-                    <option value="monthly">Monthly</option>
-                    <option value="biweekly">Bi-Weekly Payday</option>
-                    <option value="weekly">Weekly</option>
-                  </select>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Modal Footer Actions */}
