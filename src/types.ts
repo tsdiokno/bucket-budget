@@ -24,14 +24,6 @@ export interface Transaction {
   isRecurring?: boolean;
 }
 
-export interface VendorRule {
-  id: string;
-  merchantPattern: string;
-  targetBucketId: string;
-  autoApply: boolean;
-  bucketName?: string;
-}
-
 export interface BudgetPreset {
   id: string;
   name: string;
@@ -39,7 +31,6 @@ export interface BudgetPreset {
   totalPool: number;
   buckets: BucketNode[];
   transactions: Transaction[];
-  vendorRules: VendorRule[];
 }
 
 export interface OverallTotals {
@@ -49,4 +40,4 @@ export interface OverallTotals {
   unallocatedPool: number; // totalPool - (totalAllocated + totalFees)
 }
 
-export type ActiveTab = 'buckets' | 'transactions' | 'rules';
+export type ActiveTab = 'buckets' | 'transactions';

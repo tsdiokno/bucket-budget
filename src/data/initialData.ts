@@ -63,6 +63,5 @@ export const INITIAL_PRESETS: BudgetPreset[] = [
         category: 'Groceries',
       },
     ],
-    vendorRules: [],
   },
 ];

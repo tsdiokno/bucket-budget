@@ -1,45 +1,30 @@
 import React, { useState } from 'react';
-import { Transaction, VendorRule, BucketNode } from '../types';
+import { Transaction, BucketNode } from '../types';
 import { flattenBuckets } from '../utils/budgetCalculations';
 import {
   GripVertical,
   Plus,
   Trash2,
-  CheckCircle2,
-  Sparkles,
-  Zap,
-  Tag,
   Search,
   Receipt,
-  ArrowRight,
-  Filter,
-  Lightbulb,
 } from 'lucide-react';
 
 interface TransactionLedgerProps {
   transactions: Transaction[];
-  vendorRules: VendorRule[];
   buckets: BucketNode[];
   onAssignTransaction: (transactionId: string, bucketId: string | null) => void;
   onAddTransaction: (newTx: Omit<Transaction, 'id'>) => void;
   onDeleteTransaction: (id: string) => void;
-  onAddVendorRule: (rule: Omit<VendorRule, 'id'>) => void;
-  onDeleteVendorRule: (id: string) => void;
-  onAutoCategorizeAll: () => void;
 }
 
 export const TransactionLedger: React.FC<TransactionLedgerProps> = ({
   transactions,
-  vendorRules,
   buckets,
   onAssignTransaction,
   onAddTransaction,
   onDeleteTransaction,
-  onAddVendorRule,
-  onDeleteVendorRule,
-  onAutoCategorizeAll,
 }) => {
-  const [tab, setTab] = useState<'unassigned' | 'all' | 'rules'>('unassigned');
+  const [tab, setTab] = useState<'unassigned' | 'all'>('unassigned');
   const [searchQuery, setSearchQuery] = useState('');
   
   // New transaction form state
@@ -87,12 +72,6 @@ export const TransactionLedger: React.FC<TransactionLedgerProps> = ({
     return true;
   });
 
-  const getBucketPathName = (bucketId: string | null) => {
-    if (!bucketId) return 'Unassigned (Pool Queue)';
-    const item = flatBucketList.find((b) => b.node.id === bucketId);
-    return item ? item.pathName : 'Assigned Bucket';
-  };
-
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-5 text-left space-y-4">
       
@@ -119,16 +98,6 @@ export const TransactionLedger: React.FC<TransactionLedgerProps> = ({
 
         {/* Quick Actions */}
         <div className="flex items-center gap-2">
-          {unassignedCount > 0 && vendorRules.length > 0 && (
-            <button
-              onClick={onAutoCategorizeAll}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
-            >
-              <Zap className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Auto-Assign Rules ({vendorRules.length})</span>
-            </button>
-          )}
-
           <button
             onClick={() => setShowAddForm(!showAddForm)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
@@ -228,178 +197,106 @@ export const TransactionLedger: React.FC<TransactionLedgerProps> = ({
           >
             All Ledger ({transactions.length})
           </button>
-          <button
-            onClick={() => setTab('rules')}
-            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
-              tab === 'rules' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            Auto Rules ({vendorRules.length})
-          </button>
         </div>
 
-        {tab !== 'rules' && (
-          <div className="relative w-full sm:w-64">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search merchant or description..."
-              className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500"
-            />
-          </div>
-        )}
+        <div className="relative w-full sm:w-64">
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search merchant or description..."
+            className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          />
+        </div>
       </div>
 
       {/* Tab Content: Transactions List */}
-      {tab !== 'rules' ? (
-        <div className="space-y-2">
-          {filteredTxs.length > 0 ? (
-            filteredTxs.map((tx) => (
-              <div
-                key={tx.id}
-                draggable
-                onDragStart={(e) => {
-                  e.dataTransfer.setData(
-                    'application/json',
-                    JSON.stringify({
-                      type: 'transaction',
-                      transactionId: tx.id,
-                    })
-                  );
-                }}
-                className={`p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all cursor-grab active:cursor-grabbing hover:border-emerald-300 hover:shadow-xs ${
-                  tx.bucketId === null
-                    ? 'bg-amber-50/40 border-amber-200'
-                    : 'bg-white border-slate-200'
-                }`}
-              >
-                {/* Drag Handle & Merchant */}
-                <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <div className="p-1 text-slate-400 hover:text-slate-700">
-                    <GripVertical className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-slate-900 truncate">
-                        {tx.merchant}
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-medium">
-                        {tx.date}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-500 truncate">{tx.description}</p>
-                  </div>
+      <div className="space-y-2">
+        {filteredTxs.length > 0 ? (
+          filteredTxs.map((tx) => (
+            <div
+              key={tx.id}
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.setData(
+                  'application/json',
+                  JSON.stringify({
+                    type: 'transaction',
+                    transactionId: tx.id,
+                  })
+                );
+              }}
+              className={`p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all cursor-grab active:cursor-grabbing hover:border-emerald-300 hover:shadow-xs ${
+                tx.bucketId === null
+                  ? 'bg-amber-50/40 border-amber-200'
+                  : 'bg-white border-slate-200'
+              }`}
+            >
+              {/* Drag Handle & Merchant */}
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <div className="p-1 text-slate-400 hover:text-slate-700">
+                  <GripVertical className="w-4 h-4" />
                 </div>
-
-                {/* Amount & Destination Bucket Dropdown */}
-                <div className="flex items-center gap-3 justify-between sm:justify-end">
-                  <div className="text-right">
-                    <div className="text-sm font-extrabold text-slate-900">
-                      -${tx.amount.toFixed(2)}
-                    </div>
-                    <span className="text-[10px] text-slate-400 font-semibold block">
-                      {tx.bucketId ? 'Assigned' : 'Unassigned'}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-slate-900 truncate">
+                      {tx.merchant}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      {tx.date}
                     </span>
                   </div>
-
-                  {/* Manual Target Bucket Selector */}
-                  <div className="flex items-center gap-1">
-                    <select
-                      value={tx.bucketId || ''}
-                      onChange={(e) => {
-                        const targetId = e.target.value || null;
-                        onAssignTransaction(tx.id, targetId);
-
-                        // Offer auto-rule suggestion if assigning an unassigned merchant
-                        if (targetId && !vendorRules.some((r) => r.merchantPattern.toLowerCase() === tx.merchant.toLowerCase())) {
-                          const targetBucket = flatBucketList.find((b) => b.node.id === targetId);
-                          if (targetBucket && window.confirm(`Always auto-route future "${tx.merchant}" transactions to "${targetBucket.node.name}"?`)) {
-                            onAddVendorRule({
-                              merchantPattern: tx.merchant,
-                              targetBucketId: targetId,
-                              autoApply: true,
-                              bucketName: targetBucket.node.name,
-                            });
-                          }
-                        }
-                      }}
-                      className="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500 max-w-[160px] truncate"
-                    >
-                      <option value="">(Unassigned Queue)</option>
-                      {flatBucketList.map((item) => (
-                        <option key={item.node.id} value={item.node.id}>
-                          {item.pathName}
-                        </option>
-                      ))}
-                    </select>
-
-                    <button
-                      onClick={() => onDeleteTransaction(tx.id)}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 rounded-md transition-colors"
-                      title="Delete transaction"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  <p className="text-xs text-slate-500 truncate">{tx.description}</p>
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="text-center py-8 text-slate-400 text-xs">
-              No transactions found matching criteria.
-            </div>
-          )}
-        </div>
-      ) : (
-        /* Tab Content: Auto Categorization Rules */
-        <div className="space-y-3">
-          <div className="bg-emerald-50/60 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-900 flex items-start gap-2">
-            <Lightbulb className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-bold">Vendor Categorization Rules</p>
-              <p className="text-slate-600 mt-0.5">
-                When new transactions enter the pool with matching merchant names, they automatically route into their assigned bucket.
-              </p>
-            </div>
-          </div>
 
-          {vendorRules.length > 0 ? (
-            <div className="space-y-2">
-              {vendorRules.map((rule) => (
-                <div
-                  key={rule.id}
-                  className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between gap-3 text-xs"
-                >
-                  <div className="flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-emerald-600" />
-                    <div>
-                      <span className="font-bold text-slate-900">"{rule.merchantPattern}"</span>
-                      <span className="text-slate-400 mx-1.5">→</span>
-                      <span className="font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                        {rule.bucketName || getBucketPathName(rule.targetBucketId)}
-                      </span>
-                    </div>
+              {/* Amount & Destination Bucket Dropdown */}
+              <div className="flex items-center gap-3 justify-between sm:justify-end">
+                <div className="text-right">
+                  <div className="text-sm font-extrabold text-slate-900">
+                    -${tx.amount.toFixed(2)}
                   </div>
+                  <span className="text-[10px] text-slate-400 font-semibold block">
+                    {tx.bucketId ? 'Assigned' : 'Unassigned'}
+                  </span>
+                </div>
+
+                {/* Manual Target Bucket Selector */}
+                <div className="flex items-center gap-1">
+                  <select
+                    value={tx.bucketId || ''}
+                    onChange={(e) => {
+                      const targetId = e.target.value || null;
+                      onAssignTransaction(tx.id, targetId);
+                    }}
+                    className="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500 max-w-[160px] truncate"
+                  >
+                    <option value="">(Unassigned Queue)</option>
+                    {flatBucketList.map((item) => (
+                      <option key={item.node.id} value={item.node.id}>
+                        {item.pathName}
+                      </option>
+                    ))}
+                  </select>
 
                   <button
-                    onClick={() => onDeleteVendorRule(rule.id)}
-                    className="p-1 text-slate-400 hover:text-rose-600 transition-colors"
-                    title="Delete rule"
+                    onClick={() => onDeleteTransaction(tx.id)}
+                    className="p-1.5 text-slate-400 hover:text-rose-600 rounded-md transition-colors"
+                    title="Delete transaction"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
-              ))}
+              </div>
             </div>
-          ) : (
-            <div className="text-center py-8 text-slate-400 text-xs">
-              No automatic vendor rules established yet. Drag or assign a transaction to create rules automatically!
-            </div>
-          )}
-        </div>
-      )}
+          ))
+        ) : (
+          <div className="text-center py-8 text-slate-400 text-xs">
+            No transactions found matching criteria.
+          </div>
+        )}
+      </div>
     </div>
   );
 };

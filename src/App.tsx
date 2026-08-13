@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   BucketNode,
   Transaction,
-  VendorRule,
   ActiveTab,
 } from './types';
 import {
@@ -26,13 +25,8 @@ import { BucketModal } from './components/BucketModal';
 import { TransactionLedger } from './components/TransactionLedger';
 import { QuickTransferModal } from './components/QuickTransferModal';
 import {
-  Layers,
   Receipt,
-  Zap,
-  Sparkles,
-  Info,
   CheckCircle2,
-  PlusCircle,
   FolderTree,
 } from 'lucide-react';
 
@@ -335,49 +329,6 @@ export default function App() {
     }));
   };
 
-  const handleAddVendorRule = (rule: Omit<VendorRule, 'id'>) => {
-    const created: VendorRule = {
-      ...rule,
-      id: `vr-${Date.now()}`,
-    };
-    setData((prev) => ({
-      ...prev,
-      vendorRules: [...prev.vendorRules, created],
-    }));
-    showToast(`Saved auto-categorization rule for "${created.merchantPattern}"`);
-  };
-
-  const handleDeleteVendorRule = (id: string) => {
-    setData((prev) => ({
-      ...prev,
-      vendorRules: prev.vendorRules.filter((r) => r.id !== id),
-    }));
-  };
-
-  const handleAutoCategorizeAll = () => {
-    let count = 0;
-    setData((prev) => {
-      const updatedTxs = prev.transactions.map((tx) => {
-        if (tx.bucketId !== null) return tx;
-        const matchingRule = prev.vendorRules.find((r) =>
-          tx.merchant.toLowerCase().includes(r.merchantPattern.toLowerCase())
-        );
-        if (matchingRule) {
-          count++;
-          return { ...tx, bucketId: matchingRule.targetBucketId };
-        }
-        return tx;
-      });
-      return { ...prev, transactions: updatedTxs };
-    });
-
-    if (count > 0) {
-      showToast(`Auto-categorized ${count} transactions using vendor rules!`);
-    } else {
-      showToast('No unassigned transactions matched current vendor rules.');
-    }
-  };
-
   const unassignedTxs = data.transactions.filter((t) => t.bucketId === null);
 
   return (
@@ -425,7 +376,7 @@ export default function App() {
               }`}
             >
               <Receipt className="w-4 h-4 text-amber-400" />
-              <span>Transaction Queue & Rules</span>
+              <span>Transaction Queue</span>
               {unassignedTxs.length > 0 && (
                 <span className="bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">
                   {unassignedTxs.length}
@@ -511,14 +462,10 @@ export default function App() {
         {activeTab === 'transactions' && (
           <TransactionLedger
             transactions={data.transactions}
-            vendorRules={data.vendorRules}
             buckets={data.buckets}
             onAssignTransaction={handleAssignTransaction}
             onAddTransaction={handleAddTransaction}
             onDeleteTransaction={handleDeleteTransaction}
-            onAddVendorRule={handleAddVendorRule}
-            onDeleteVendorRule={handleDeleteVendorRule}
-            onAutoCategorizeAll={handleAutoCategorizeAll}
           />
         )}
       </main>
