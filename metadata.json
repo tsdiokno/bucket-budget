@@ -1,0 +1,6 @@
+{
+  "name": "Bucket Budget",
+  "description": "Personal budgeting app using nested buckets and sub-buckets, automated fund allocation, drag-and-drop expense categorization, and recurring contribution rules.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
