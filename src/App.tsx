@@ -196,8 +196,6 @@ export default function App() {
       buckets: addChildBucketToTree(prev.buckets, parentNode.id, newBucket),
     }));
 
-    // Immediately open inspector for newly created sub-bucket
-    setInspectNode(newBucket);
     showToast(`Added ${levelLabel} under "${parentNode.name}"`);
   };
 
@@ -210,7 +208,7 @@ export default function App() {
       parentId: null,
       allocated: 0,
       fee: 0,
-      notes: 'Root allocation domain.',
+      notes: '',
     };
 
     setData((prev) => ({
@@ -218,7 +216,6 @@ export default function App() {
       buckets: addChildBucketToTree(prev.buckets, null, newRoot),
     }));
 
-    setInspectNode(newRoot);
     showToast('Created new Root Bucket');
   };
 

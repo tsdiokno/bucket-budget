@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { BucketNode, Transaction } from '../types';
 import { calculateBucketTotals } from '../utils/budgetCalculations';
 import {
@@ -95,7 +96,26 @@ export const BucketCard: React.FC<BucketCardProps> = ({
 
   const totals = calculateBucketTotals(node, transactions);
   const hasChildren = node.children && node.children.length > 0;
-  const isExpanded = !!expandedIds[node.id];
+  const isExpanded = expandedIds[node.id] !== false;
+
+  // Highlight newly created bucket and gracefully fade it out after a few seconds
+  const [highlightActive, setHighlightActive] = useState(() => {
+    const match = node.id.match(/\d{10,}/);
+    if (match) {
+      const ts = parseInt(match[0], 10);
+      return Date.now() - ts < 4000;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (highlightActive) {
+      const timer = setTimeout(() => {
+        setHighlightActive(false);
+      }, 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [highlightActive]);
 
   // Level-based styling
   const isLevel1 = node.level === 1;
@@ -172,7 +192,14 @@ export const BucketCard: React.FC<BucketCardProps> = ({
   const levelBadgeLabel = isLevel1 ? 'Level 1: Bucket' : isLevel2 ? 'Level 2: Sub-Bucket' : 'Level 3: Sub-Sub Bucket';
 
   return (
-    <div className="relative">
+    <motion.div
+      layout="position"
+      initial={{ opacity: 0, y: -10, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+      className="relative px-0.5"
+    >
       {/* Top Drop Indicator Line */}
       {dropPosition === 'before' && (
         <div className="absolute -top-2 left-0 right-0 z-30 flex items-center gap-2 pointer-events-none">
@@ -190,7 +217,11 @@ export const BucketCard: React.FC<BucketCardProps> = ({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`rounded-xl transition-all duration-200 border text-left ${
+        className={`rounded-xl transition-all duration-700 border text-left ${
+          highlightActive
+            ? 'ring-2 ring-emerald-500/90 shadow-lg shadow-emerald-500/10'
+            : 'ring-0 ring-transparent shadow-none'
+        } ${
           node.isMuted
             ? 'bg-slate-100/90 border-dashed border-amber-300 opacity-75'
             : isLevel1
@@ -460,30 +491,38 @@ export const BucketCard: React.FC<BucketCardProps> = ({
       </div>
 
       {/* Render Nested Child Buckets */}
-      {hasChildren && isExpanded && (
-        <div className="mt-3 space-y-2 border-l-2 border-slate-300/80 pl-1 sm:pl-2">
-          {node.children!.map((child) => (
-            <BucketCard
-              key={child.id}
-              node={child}
-              transactions={transactions}
-              expandedIds={expandedIds}
-              onToggleExpand={onToggleExpand}
-              onOpenInspector={onOpenInspector}
-              onAddChildBucket={onAddChildBucket}
-              onDeleteBucket={onDeleteBucket}
-              onToggleMuteBucket={onToggleMuteBucket}
-              onQuickUpdateAllocation={onQuickUpdateAllocation}
-              onQuickUpdateFee={onQuickUpdateFee}
-              onQuickUpdateName={onQuickUpdateName}
-              onDropTransaction={onDropTransaction}
-              onDropTransferFunds={onDropTransferFunds}
-              onOpenTransferModal={onOpenTransferModal}
-              onMoveBucket={onMoveBucket}
-            />
-          ))}
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {hasChildren && isExpanded && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="mt-3 space-y-2 border-l-2 border-slate-300/80 pl-1 sm:pl-2 pr-1"
+          >
+            {node.children!.map((child) => (
+              <BucketCard
+                key={child.id}
+                node={child}
+                transactions={transactions}
+                expandedIds={expandedIds}
+                onToggleExpand={onToggleExpand}
+                onOpenInspector={onOpenInspector}
+                onAddChildBucket={onAddChildBucket}
+                onDeleteBucket={onDeleteBucket}
+                onToggleMuteBucket={onToggleMuteBucket}
+                onQuickUpdateAllocation={onQuickUpdateAllocation}
+                onQuickUpdateFee={onQuickUpdateFee}
+                onQuickUpdateName={onQuickUpdateName}
+                onDropTransaction={onDropTransaction}
+                onDropTransferFunds={onDropTransferFunds}
+                onOpenTransferModal={onOpenTransferModal}
+                onMoveBucket={onMoveBucket}
+              />
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
       </div>
 
       {/* Bottom Drop Indicator Line */}
@@ -498,6 +537,6 @@ export const BucketCard: React.FC<BucketCardProps> = ({
           <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-sm" />
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };

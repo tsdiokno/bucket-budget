@@ -36,41 +36,47 @@ export const BucketTree: React.FC<BucketTreeProps> = ({
   onOpenTransferModal,
   onMoveBucket,
 }) => {
-  const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>(() => {
-    // Expand top level buckets by default
-    const map: Record<string, boolean> = {};
-    buckets.forEach((b) => {
-      map[b.id] = true;
-      if (b.children) {
-        b.children.forEach((child) => {
-          map[child.id] = true;
-        });
-      }
-    });
-    return map;
-  });
+  // Empty object means all buckets are expanded by default (isExpanded = expandedIds[id] !== false)
+  const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isRootDragOver, setIsRootDragOver] = useState(false);
 
   const toggleExpand = (id: string) => {
-    setExpandedIds((prev) => ({ ...prev, [id]: !prev[id] }));
+    setExpandedIds((prev) => {
+      const isCurrentlyExpanded = prev[id] !== false;
+      return { ...prev, [id]: !isCurrentlyExpanded };
+    });
   };
 
   const expandAll = () => {
-    const map: Record<string, boolean> = {};
-    function setAll(list: BucketNode[]) {
-      list.forEach((n) => {
-        map[n.id] = true;
-        if (n.children) setAll(n.children);
-      });
-    }
-    setAll(buckets);
-    setExpandedIds(map);
+    // Clear all collapsed overrides so everything is open
+    setExpandedIds({});
   };
 
   const collapseAll = () => {
-    setExpandedIds({});
+    const map: Record<string, boolean> = {};
+    function setAllCollapsed(list: BucketNode[]) {
+      list.forEach((n) => {
+        map[n.id] = false;
+        if (n.children) setAllCollapsed(n.children);
+      });
+    }
+    setAllCollapsed(buckets);
+    setExpandedIds(map);
+  };
+
+  // Wrapper for adding child bucket that ensures the parent (and its ancestors) open immediately
+  const handleAddChildBucketWithExpand = (parentNode: BucketNode) => {
+    setExpandedIds((prev) => {
+      const next = { ...prev };
+      next[parentNode.id] = true;
+      if (parentNode.parentId) {
+        next[parentNode.parentId] = true;
+      }
+      return next;
+    });
+    onAddChildBucket(parentNode);
   };
 
   // Root drop zone handlers for promoting sub-buckets to root
@@ -180,7 +186,7 @@ export const BucketTree: React.FC<BucketTreeProps> = ({
 
       {/* Bucket List Hierarchy Container */}
       {filteredBuckets.length > 0 ? (
-        <div className="space-y-1">
+        <div className="space-y-1 px-1 py-0.5">
           {filteredBuckets.map((rootNode) => (
             <BucketCard
               key={rootNode.id}
@@ -189,7 +195,7 @@ export const BucketTree: React.FC<BucketTreeProps> = ({
               expandedIds={expandedIds}
               onToggleExpand={toggleExpand}
               onOpenInspector={onOpenInspector}
-              onAddChildBucket={onAddChildBucket}
+              onAddChildBucket={handleAddChildBucketWithExpand}
               onDeleteBucket={onDeleteBucket}
               onToggleMuteBucket={onToggleMuteBucket}
               onQuickUpdateAllocation={onQuickUpdateAllocation}

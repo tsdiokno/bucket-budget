@@ -162,7 +162,7 @@ export function addChildBucketToTree(
   newBucket: BucketNode
 ): BucketNode[] {
   if (parentId === null) {
-    return [...nodes, newBucket];
+    return [newBucket, ...nodes];
   }
 
   return nodes.map((node) => {
@@ -170,7 +170,7 @@ export function addChildBucketToTree(
       const existingChildren = node.children || [];
       return {
         ...node,
-        children: [...existingChildren, newBucket],
+        children: [newBucket, ...existingChildren],
       };
     }
     if (node.children && node.children.length > 0) {
