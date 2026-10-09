@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BucketNode, Transaction } from '../types';
 import { calculateBucketTotals } from '../utils/budgetCalculations';
+import { MathInput } from './MathInput';
 import {
   ChevronRight,
   ChevronDown,
@@ -54,26 +55,14 @@ export const BucketCard: React.FC<BucketCardProps> = ({
 }) => {
   const [dropPosition, setDropPosition] = useState<'before' | 'inside' | 'after' | null>(null);
   const [isEditingName, setIsEditingName] = useState(false);
-  const [prevNodeProps, setPrevNodeProps] = useState({ name: node.name, fee: node.fee, allocated: node.allocated });
+  const [prevName, setPrevName] = useState(node.name);
   const [nameInput, setNameInput] = useState(node.name);
-  const [feeInput, setFeeInput] = useState((node.fee || 0).toString());
-  const [allocInput, setAllocInput] = useState((node.allocated || 0).toString());
 
-  // Adjust local input states during render if external props change
-  if (
-    prevNodeProps.name !== node.name ||
-    prevNodeProps.fee !== node.fee ||
-    prevNodeProps.allocated !== node.allocated
-  ) {
-    setPrevNodeProps({ name: node.name, fee: node.fee, allocated: node.allocated });
-    if (!isEditingName && node.name !== nameInput) {
+  // Adjust name state during render if external name changes
+  if (prevName !== node.name) {
+    setPrevName(node.name);
+    if (!isEditingName) {
       setNameInput(node.name);
-    }
-    if ((node.fee || 0) !== (prevNodeProps.fee || 0)) {
-      setFeeInput((node.fee || 0).toString());
-    }
-    if ((node.allocated || 0) !== (prevNodeProps.allocated || 0)) {
-      setAllocInput((node.allocated || 0).toString());
     }
   }
 
@@ -368,28 +357,12 @@ export const BucketCard: React.FC<BucketCardProps> = ({
 
             {!hasChildren ? (
               <div className="flex items-center gap-1 justify-end">
-                <input
-                  type="number"
-                  step="any"
-                  min="0"
+                <MathInput
+                  value={node.allocated ?? 0}
+                  onChangeValue={(newVal) => onQuickUpdateAllocation(node.id, newVal)}
+                  className="w-20 sm:w-24 focus:w-40 text-right text-xs font-bold text-emerald-800 bg-white border border-slate-300 rounded px-1.5 py-0.5 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   placeholder="0"
-                  value={allocInput}
-                  onChange={(e) => {
-                    const valStr = e.target.value;
-                    setAllocInput(valStr);
-                    const val = parseFloat(valStr);
-                    onQuickUpdateAllocation(node.id, !isNaN(val) && val >= 0 ? val : 0);
-                  }}
-                  onBlur={() => {
-                    const val = parseFloat(allocInput);
-                    if (isNaN(val) || val < 0 || allocInput.trim() === '') {
-                      setAllocInput('0');
-                      onQuickUpdateAllocation(node.id, 0);
-                    } else {
-                      setAllocInput(val.toString());
-                    }
-                  }}
-                  className="w-20 text-right text-xs font-bold text-emerald-800 bg-white border border-slate-300 rounded px-1.5 py-0.5 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                  title="Allocated fund — supports PEMDAS math, e.g. (1+1-500+3)/6"
                 />
               </div>
             ) : (
@@ -405,28 +378,12 @@ export const BucketCard: React.FC<BucketCardProps> = ({
               Dedicated Fee
             </span>
             <div className="flex items-center gap-1 justify-end">
-              <input
-                type="number"
-                step="any"
-                min="0"
+              <MathInput
+                value={node.fee ?? 0}
+                onChangeValue={(newVal) => onQuickUpdateFee(node.id, newVal)}
+                className="w-16 sm:w-20 focus:w-32 text-right text-xs font-medium text-amber-800 bg-white border border-slate-300 rounded px-1.5 py-0.5 focus:ring-1 focus:ring-amber-500 focus:outline-none"
                 placeholder="0"
-                value={feeInput}
-                onChange={(e) => {
-                  const valStr = e.target.value;
-                  setFeeInput(valStr);
-                  const val = parseFloat(valStr);
-                  onQuickUpdateFee(node.id, !isNaN(val) && val >= 0 ? val : 0);
-                }}
-                onBlur={() => {
-                  const val = parseFloat(feeInput);
-                  if (isNaN(val) || val < 0 || feeInput.trim() === '') {
-                    setFeeInput('0');
-                    onQuickUpdateFee(node.id, 0);
-                  } else {
-                    setFeeInput(val.toString());
-                  }
-                }}
-                className="w-16 text-right text-xs font-medium text-amber-800 bg-white border border-slate-300 rounded px-1.5 py-0.5 focus:ring-1 focus:ring-amber-500 focus:outline-none"
+                title="Dedicated fee — supports PEMDAS math, e.g. 50*1.05"
               />
             </div>
           </div>

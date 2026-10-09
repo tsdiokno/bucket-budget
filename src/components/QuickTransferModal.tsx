@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BucketNode } from '../types';
 import { flattenBuckets } from '../utils/budgetCalculations';
+import { MathInput } from './MathInput';
 import { X, ArrowRightLeft, DollarSign, Check } from 'lucide-react';
 
 interface QuickTransferModalProps {
@@ -22,15 +23,14 @@ export const QuickTransferModal: React.FC<QuickTransferModalProps> = ({
 
   const flatList = flattenBuckets(buckets).filter((b) => b.node.id !== sourceBucket.id);
   const [targetBucketId, setTargetBucketId] = useState<string>(flatList[0]?.node.id || '');
-  const [transferAmount, setTransferAmount] = useState<string>(
-    sourceBucket.allocated ? sourceBucket.allocated.toString() : '50'
+  const [transferAmount, setTransferAmount] = useState<number>(
+    sourceBucket.allocated ? Math.max(0, sourceBucket.allocated) : 50
   );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const amount = parseFloat(transferAmount);
-    if (!isNaN(amount) && amount > 0 && targetBucketId) {
-      onExecuteTransfer(sourceBucket.id, targetBucketId, amount);
+    if (!isNaN(transferAmount) && transferAmount > 0 && targetBucketId) {
+      onExecuteTransfer(sourceBucket.id, targetBucketId, transferAmount);
       onClose();
     }
   };
@@ -86,21 +86,12 @@ export const QuickTransferModal: React.FC<QuickTransferModalProps> = ({
             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
               Transfer Amount
             </label>
-            <input
-              type="number"
-              step="any"
-              min="0"
-              placeholder="0"
-              max={sourceBucket.allocated}
+            <MathInput
               value={transferAmount}
-              onChange={(e) => setTransferAmount(e.target.value)}
-              onBlur={() => {
-                if (transferAmount.trim() === '' || isNaN(parseFloat(transferAmount))) {
-                  setTransferAmount('0');
-                }
-              }}
+              onChangeValue={setTransferAmount}
+              placeholder="0"
               className="w-full text-sm font-bold text-slate-900 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-              required
+              title="Transfer amount — supports math formulas e.g. (1000-200)/2"
             />
           </div>
 

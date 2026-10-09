@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { BucketNode } from '../types';
 import { flattenBuckets, isDescendant } from '../utils/budgetCalculations';
+import { MathInput } from './MathInput';
 import {
   X,
   Save,
@@ -30,8 +31,8 @@ export const BucketModal: React.FC<BucketModalProps> = ({
   const [prevNodeId, setPrevNodeId] = useState(node.id);
   const [name, setName] = useState(node.name);
   const [notes, setNotes] = useState(node.notes || '');
-  const [feeInput, setFeeInput] = useState((node.fee ?? 0).toString());
-  const [allocatedInput, setAllocatedInput] = useState((node.allocated ?? 0).toString());
+  const [fee, setFee] = useState<number>(node.fee ?? 0);
+  const [allocated, setAllocated] = useState<number>(node.allocated ?? 0);
   const [isMuted, setIsMuted] = useState(!!node.isMuted);
   const [selectedParentId, setSelectedParentId] = useState<string>(node.parentId || '');
 
@@ -39,8 +40,8 @@ export const BucketModal: React.FC<BucketModalProps> = ({
     setPrevNodeId(node.id);
     setName(node.name);
     setNotes(node.notes || '');
-    setFeeInput((node.fee ?? 0).toString());
-    setAllocatedInput((node.allocated ?? 0).toString());
+    setFee(node.fee ?? 0);
+    setAllocated(node.allocated ?? 0);
     setIsMuted(!!node.isMuted);
     setSelectedParentId(node.parentId || '');
   }
@@ -63,15 +64,12 @@ export const BucketModal: React.FC<BucketModalProps> = ({
       onMoveBucket(node.id, selectedParentId === '' ? null : selectedParentId);
     }
 
-    const parsedAllocated = parseFloat(allocatedInput);
-    const parsedFee = parseFloat(feeInput);
-
     const updated: BucketNode = {
       ...node,
       name: name.trim() || 'Untitled Bucket',
       notes: notes.trim(),
-      fee: !isNaN(parsedFee) && parsedFee >= 0 ? parsedFee : 0,
-      allocated: !isNaN(parsedAllocated) && parsedAllocated >= 0 ? parsedAllocated : 0,
+      fee: !isNaN(fee) ? fee : 0,
+      allocated: !isNaN(allocated) ? allocated : 0,
       isMuted,
     };
 
@@ -149,19 +147,12 @@ export const BucketModal: React.FC<BucketModalProps> = ({
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                 Current Allocated Amount
               </label>
-              <input
-                type="number"
-                step="any"
-                min="0"
-                value={allocatedInput}
-                onChange={(e) => setAllocatedInput(e.target.value)}
-                onBlur={() => {
-                  if (allocatedInput.trim() === '' || isNaN(parseFloat(allocatedInput))) {
-                    setAllocatedInput('0');
-                  }
-                }}
+              <MathInput
+                value={allocated}
+                onChangeValue={setAllocated}
                 className="w-full px-3 py-1.5 text-xs font-bold text-emerald-800 bg-emerald-50/50 border border-emerald-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 placeholder="0"
+                title="Current allocated amount — supports PEMDAS math e.g. (1+1-500+3)/6"
               />
             </div>
 
@@ -170,22 +161,15 @@ export const BucketModal: React.FC<BucketModalProps> = ({
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                 Dedicated Fee
               </label>
-              <input
-                type="number"
-                step="any"
-                min="0"
-                value={feeInput}
-                onChange={(e) => setFeeInput(e.target.value)}
-                onBlur={() => {
-                  if (feeInput.trim() === '' || isNaN(parseFloat(feeInput))) {
-                    setFeeInput('0');
-                  }
-                }}
+              <MathInput
+                value={fee}
+                onChangeValue={setFee}
                 className="w-full px-3 py-1.5 text-xs font-bold text-amber-800 bg-amber-50/50 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none"
                 placeholder="0"
+                title="Dedicated fee — supports PEMDAS math e.g. 50*1.05"
               />
               <p className="text-[10px] text-slate-400 mt-1">
-                ACH / Portal convenience charge
+                ACH / Portal convenience charge (supports math)
               </p>
             </div>
           </div>

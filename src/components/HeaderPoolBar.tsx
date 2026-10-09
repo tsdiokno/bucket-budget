@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { OverallTotals } from '../types';
+import { MathInput } from './MathInput';
 import {
   Wallet,
   PlusCircle,
@@ -259,50 +260,27 @@ export const HeaderPoolBar: React.FC<HeaderPoolBarProps> = ({
 
               {isEditingPool ? (
                 <div className="flex items-center gap-1 mt-1">
-                  <input
-                    type="number"
-                    step="any"
-                    min="0"
+                  <MathInput
+                    value={totals.totalPool}
+                    onChangeValue={(newVal) => onUpdateTotalPool(newVal)}
+                    className="w-full text-base font-bold text-slate-900 border border-emerald-400 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     placeholder="0"
-                    value={poolInput}
-                    onChange={(e) => {
-                      const valStr = e.target.value;
-                      setPoolInput(valStr);
-                      const parsed = parseFloat(valStr);
-                      onUpdateTotalPool(!isNaN(parsed) && parsed >= 0 ? parsed : 0);
-                    }}
-                    onBlur={() => {
-                      const parsed = parseFloat(poolInput);
-                      if (isNaN(parsed) || parsed < 0 || poolInput.trim() === '') {
-                        setPoolInput('0');
-                        onUpdateTotalPool(0);
-                      } else {
-                        setPoolInput(parsed.toString());
-                      }
-                      setIsEditingPool(false);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') setIsEditingPool(false);
-                      if (e.key === 'Escape') setIsEditingPool(false);
-                    }}
-                    className="w-full text-base font-bold text-slate-900 border border-emerald-400 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    title="Total pool amount — supports PEMDAS math e.g. 2500+500"
                     autoFocus
                   />
                   <button
                     onClick={() => setIsEditingPool(false)}
-                    className="p-1 bg-emerald-600 text-white rounded hover:bg-emerald-700"
+                    className="p-1 bg-emerald-600 text-white rounded hover:bg-emerald-700 cursor-pointer shrink-0"
+                    title="Done editing"
                   >
                     <Check className="w-3 h-3" />
                   </button>
                 </div>
               ) : (
                 <div
-                  onClick={() => {
-                    setPoolInput(totals.totalPool.toString());
-                    setIsEditingPool(true);
-                  }}
+                  onClick={() => setIsEditingPool(true)}
                   className="text-lg font-extrabold text-slate-900 mt-0.5 cursor-pointer hover:text-emerald-700 transition-colors"
-                  title="Click to edit pool amount"
+                  title="Click to edit pool amount (supports math formulas)"
                 >
                   {totals.totalPool.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Transaction, BucketNode } from '../types';
 import { flattenBuckets } from '../utils/budgetCalculations';
+import { MathInput } from './MathInput';
 import {
   GripVertical,
   Plus,
@@ -31,7 +32,7 @@ export const TransactionLedger: React.FC<TransactionLedgerProps> = ({
   const [showAddForm, setShowAddForm] = useState(false);
   const [merchant, setMerchant] = useState('');
   const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState<number>(0);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedBucketId, setSelectedBucketId] = useState<string>('');
 
@@ -39,12 +40,12 @@ export const TransactionLedger: React.FC<TransactionLedgerProps> = ({
 
   const handleCreateTransaction = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!merchant || !amount) return;
+    if (!merchant || isNaN(amount) || amount === 0) return;
 
     onAddTransaction({
       merchant: merchant.trim(),
       description: description.trim() || merchant.trim(),
-      amount: Math.abs(parseFloat(amount)),
+      amount: Math.abs(amount),
       date,
       bucketId: selectedBucketId || null,
       category: 'Expense',
@@ -52,7 +53,7 @@ export const TransactionLedger: React.FC<TransactionLedgerProps> = ({
 
     setMerchant('');
     setDescription('');
-    setAmount('');
+    setAmount(0);
     setShowAddForm(false);
   };
 
@@ -125,20 +126,12 @@ export const TransactionLedger: React.FC<TransactionLedgerProps> = ({
             </div>
             <div>
               <label className="block text-[11px] font-bold text-slate-600 mb-1">Amount</label>
-              <input
-                type="number"
-                step="any"
-                min="0"
+              <MathInput
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                onBlur={() => {
-                  if (amount.trim() === '' || isNaN(parseFloat(amount))) {
-                    setAmount('0');
-                  }
-                }}
+                onChangeValue={setAmount}
                 placeholder="0"
                 className="w-full text-xs border border-slate-300 rounded-lg p-1.5 bg-white font-bold text-slate-900"
-                required
+                title="Transaction amount — supports PEMDAS math e.g. 15.50 + 4.25"
               />
             </div>
             <div>
