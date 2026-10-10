@@ -52,16 +52,5 @@ export const INITIAL_PRESETS: BudgetPreset[] = [
         ],
       },
     ],
-    transactions: [
-      {
-        id: 'tx-1',
-        merchant: 'Grocery Store',
-        description: 'Weekly groceries',
-        amount: 85.00,
-        date: '2026-08-10',
-        bucketId: 'b-groceries',
-        category: 'Groceries',
-      },
-    ],
   },
 ];

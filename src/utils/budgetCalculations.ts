@@ -1,4 +1,4 @@
-import { BucketNode, OverallTotals, Transaction } from '../types';
+import { BucketNode, OverallTotals } from '../types';
 
 /**
  * Gets leaf buckets (buckets without children, usually Level 3 or Level 2 if no Level 3 exists)
@@ -44,8 +44,7 @@ export function flattenBuckets(
  * Recursively computes totals for a single bucket (including self + all descendants)
  */
 export function calculateBucketTotals(
-  node: BucketNode,
-  _transactions?: Transaction[]
+  node: BucketNode
 ): {
   allocatedTotal: number;
   feeTotal: number;
@@ -64,7 +63,7 @@ export function calculateBucketTotals(
     let feeTotal = 0;
 
     node.children.forEach((child) => {
-      const childTotals = calculateBucketTotals(child, _transactions);
+      const childTotals = calculateBucketTotals(child);
       allocatedTotal += childTotals.allocatedTotal;
       feeTotal += childTotals.feeTotal;
     });
@@ -95,14 +94,13 @@ export function calculateBucketTotals(
  */
 export function calculateOverallTotals(
   totalPool: number,
-  nodes: BucketNode[],
-  transactions: Transaction[] = []
+  nodes: BucketNode[]
 ): OverallTotals {
   let totalAllocated = 0;
   let totalFees = 0;
 
   nodes.forEach((node) => {
-    const totals = calculateBucketTotals(node, transactions);
+    const totals = calculateBucketTotals(node);
     totalAllocated += totals.allocatedTotal;
     totalFees += totals.feeTotal;
   });

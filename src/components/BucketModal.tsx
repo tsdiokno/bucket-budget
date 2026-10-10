@@ -64,12 +64,13 @@ export const BucketModal: React.FC<BucketModalProps> = ({
       onMoveBucket(node.id, selectedParentId === '' ? null : selectedParentId);
     }
 
+    const hasChildren = !!(node.children && node.children.length > 0);
     const updated: BucketNode = {
       ...node,
       name: name.trim() || 'Untitled Bucket',
       notes: notes.trim(),
       fee: !isNaN(fee) ? fee : 0,
-      allocated: !isNaN(allocated) ? allocated : 0,
+      allocated: hasChildren ? (node.allocated ?? 0) : (!isNaN(allocated) ? allocated : 0),
       isMuted,
     };
 

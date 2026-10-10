@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { BucketNode, Transaction } from '../types';
+import { BucketNode } from '../types';
 import { BucketCard } from './BucketCard';
 import { Search, PlusCircle, Layers, FolderOutput } from 'lucide-react';
 
 interface BucketTreeProps {
   buckets: BucketNode[];
-  transactions: Transaction[];
   onOpenInspector: (node: BucketNode) => void;
   onAddChildBucket: (parentNode: BucketNode) => void;
   onAddRootBucket: () => void;
@@ -14,7 +13,6 @@ interface BucketTreeProps {
   onQuickUpdateAllocation: (id: string, newAllocated: number) => void;
   onQuickUpdateFee: (id: string, newFee: number) => void;
   onQuickUpdateName: (id: string, newName: string) => void;
-  onDropTransaction: (transactionId: string, targetBucketId: string) => void;
   onDropTransferFunds: (sourceBucketId: string, targetBucketId: string, amount?: number) => void;
   onOpenTransferModal: (sourceBucket: BucketNode) => void;
   onMoveBucket: (movedBucketId: string, targetBucketId: string | null, position?: 'before' | 'after' | 'inside') => void;
@@ -22,7 +20,6 @@ interface BucketTreeProps {
 
 export const BucketTree: React.FC<BucketTreeProps> = ({
   buckets,
-  transactions,
   onOpenInspector,
   onAddChildBucket,
   onAddRootBucket,
@@ -31,7 +28,6 @@ export const BucketTree: React.FC<BucketTreeProps> = ({
   onQuickUpdateAllocation,
   onQuickUpdateFee,
   onQuickUpdateName,
-  onDropTransaction,
   onDropTransferFunds,
   onOpenTransferModal,
   onMoveBucket,
@@ -191,7 +187,6 @@ export const BucketTree: React.FC<BucketTreeProps> = ({
             <BucketCard
               key={rootNode.id}
               node={rootNode}
-              transactions={transactions}
               expandedIds={expandedIds}
               onToggleExpand={toggleExpand}
               onOpenInspector={onOpenInspector}
@@ -201,7 +196,6 @@ export const BucketTree: React.FC<BucketTreeProps> = ({
               onQuickUpdateAllocation={onQuickUpdateAllocation}
               onQuickUpdateFee={onQuickUpdateFee}
               onQuickUpdateName={onQuickUpdateName}
-              onDropTransaction={onDropTransaction}
               onDropTransferFunds={onDropTransferFunds}
               onOpenTransferModal={onOpenTransferModal}
               onMoveBucket={onMoveBucket}

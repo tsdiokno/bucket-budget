@@ -92,9 +92,21 @@ export const MathInput: React.FC<MathInputProps> = ({
     const val = e.target.value;
     setText(val);
 
-    // If it's a plain number without operators, update parent live
-    if (!hasMathExpression(val)) {
-      const parsed = parseFloat(val);
+    const trimmed = val.trim();
+    if (!trimmed) {
+      onChangeValue(0);
+      return;
+    }
+
+    if (hasMathExpression(trimmed)) {
+      const res = evaluateMathExpression(trimmed);
+      if (res.success) {
+        let finalVal = res.value;
+        if (!allowNegative && finalVal < 0) finalVal = 0;
+        onChangeValue(cleanFloat(finalVal));
+      }
+    } else {
+      const parsed = parseFloat(trimmed);
       if (!isNaN(parsed)) {
         let finalVal = parsed;
         if (!allowNegative && finalVal < 0) finalVal = 0;

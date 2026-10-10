@@ -14,24 +14,12 @@ export interface BucketNode {
   children?: BucketNode[];
 }
 
-export interface Transaction {
-  id: string;
-  merchant: string;
-  description: string;
-  amount: number;
-  date: string;
-  bucketId: string | null; // null = unassigned in pool queue
-  category?: string;
-  isRecurring?: boolean;
-}
-
 export interface BudgetPreset {
   id: string;
   name: string;
   description: string;
   totalPool: number;
   buckets: BucketNode[];
-  transactions: Transaction[];
 }
 
 export interface OverallTotals {
@@ -40,5 +28,3 @@ export interface OverallTotals {
   totalFees: number; // Direct or leaf fee sum
   unallocatedPool: number; // totalPool - (totalAllocated + totalFees)
 }
-
-export type ActiveTab = 'buckets' | 'transactions';

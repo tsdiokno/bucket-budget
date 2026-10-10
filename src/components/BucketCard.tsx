@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BucketNode, Transaction } from '../types';
+import { BucketNode } from '../types';
 import { calculateBucketTotals } from '../utils/budgetCalculations';
 import { MathInput } from './MathInput';
 import {
@@ -16,11 +16,12 @@ import {
   Layers,
   Layers3,
   VolumeX,
+  Pencil,
+  Check,
 } from 'lucide-react';
 
 interface BucketCardProps {
   node: BucketNode;
-  transactions: Transaction[];
   expandedIds: Record<string, boolean>;
   onToggleExpand: (id: string) => void;
   onOpenInspector: (node: BucketNode) => void;
@@ -30,7 +31,6 @@ interface BucketCardProps {
   onQuickUpdateAllocation: (id: string, newAllocated: number) => void;
   onQuickUpdateFee: (id: string, newFee: number) => void;
   onQuickUpdateName: (id: string, newName: string) => void;
-  onDropTransaction: (transactionId: string, targetBucketId: string) => void;
   onDropTransferFunds: (sourceBucketId: string, targetBucketId: string, amount?: number) => void;
   onOpenTransferModal: (sourceBucket: BucketNode) => void;
   onMoveBucket: (movedBucketId: string, targetBucketId: string | null, position?: 'before' | 'after' | 'inside') => void;
@@ -38,7 +38,6 @@ interface BucketCardProps {
 
 export const BucketCard: React.FC<BucketCardProps> = ({
   node,
-  transactions,
   expandedIds,
   onToggleExpand,
   onOpenInspector,
@@ -48,7 +47,6 @@ export const BucketCard: React.FC<BucketCardProps> = ({
   onQuickUpdateAllocation,
   onQuickUpdateFee,
   onQuickUpdateName,
-  onDropTransaction,
   onDropTransferFunds,
   onOpenTransferModal,
   onMoveBucket,
@@ -83,7 +81,7 @@ export const BucketCard: React.FC<BucketCardProps> = ({
     };
   }, []);
 
-  const totals = calculateBucketTotals(node, transactions);
+  const totals = calculateBucketTotals(node);
   const hasChildren = node.children && node.children.length > 0;
   const isExpanded = expandedIds[node.id] !== false;
 
@@ -147,9 +145,7 @@ export const BucketCard: React.FC<BucketCardProps> = ({
       const rawData = e.dataTransfer.getData('application/json');
       if (rawData) {
         const payload = JSON.parse(rawData);
-        if (payload.type === 'transaction') {
-          onDropTransaction(payload.transactionId, node.id);
-        } else if (payload.type === 'fund-transfer' && payload.sourceBucketId !== node.id) {
+        if (payload.type === 'fund-transfer' && payload.sourceBucketId !== node.id) {
           onDropTransferFunds(payload.sourceBucketId, node.id, payload.amount);
         } else if (payload.type === 'bucket-move' && payload.bucketId !== node.id) {
           onMoveBucket(payload.bucketId, node.id, currentPos);
@@ -172,10 +168,13 @@ export const BucketCard: React.FC<BucketCardProps> = ({
   };
 
   const handleSaveName = () => {
-    if (nameInput.trim()) {
-      onQuickUpdateName(node.id, nameInput.trim());
-      setIsEditingName(false);
+    const trimmed = nameInput.trim();
+    if (trimmed && trimmed !== node.name) {
+      onQuickUpdateName(node.id, trimmed);
+    } else {
+      setNameInput(node.name);
     }
+    setIsEditingName(false);
   };
 
   const levelBadgeLabel = isLevel1 ? 'Level 1: Bucket' : isLevel2 ? 'Level 2: Sub-Bucket' : 'Level 3: Sub-Sub Bucket';
@@ -278,30 +277,48 @@ export const BucketCard: React.FC<BucketCardProps> = ({
                     type="text"
                     value={nameInput}
                     onChange={(e) => setNameInput(e.target.value)}
+                    onBlur={handleSaveName}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') handleSaveName();
-                      if (e.key === 'Escape') setIsEditingName(false);
+                      if (e.key === 'Escape') {
+                        setNameInput(node.name);
+                        setIsEditingName(false);
+                      }
                     }}
-                    className="text-sm font-bold text-slate-900 border border-emerald-500 rounded px-1.5 py-0.5 focus:outline-none"
+                    className="text-sm font-bold text-slate-900 border border-emerald-500 rounded px-1.5 py-0.5 focus:outline-none bg-white ring-1 ring-emerald-400"
                     autoFocus
                   />
                   <button
-                    onClick={handleSaveName}
-                    className="text-xs bg-emerald-600 text-white px-2 py-0.5 rounded cursor-pointer"
+                    onMouseDown={(e) => {
+                      // Prevent input blur before click handler
+                      e.preventDefault();
+                      handleSaveName();
+                    }}
+                    className="p-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded cursor-pointer transition-colors"
+                    title="Save name"
                   >
-                    Save
+                    <Check className="w-3 h-3" />
                   </button>
                 </div>
               ) : (
-                <h3
-                  onDoubleClick={() => setIsEditingName(true)}
-                  className={`font-bold truncate text-slate-900 cursor-pointer hover:text-emerald-700 transition-colors ${
-                    isLevel1 ? 'text-base' : isLevel2 ? 'text-sm' : 'text-xs'
-                  } ${node.isMuted ? 'line-through text-slate-500' : ''}`}
-                  title="Double-click to edit name"
-                >
-                  {node.name}
-                </h3>
+                <div className="flex items-center gap-1 group/name">
+                  <h3
+                    onClick={() => setIsEditingName(true)}
+                    className={`font-bold truncate text-slate-900 cursor-pointer hover:text-emerald-700 transition-colors ${
+                      isLevel1 ? 'text-base' : isLevel2 ? 'text-sm' : 'text-xs'
+                    } ${node.isMuted ? 'line-through text-slate-500' : ''}`}
+                    title="Click to rename bucket"
+                  >
+                    {node.name}
+                  </h3>
+                  <button
+                    onClick={() => setIsEditingName(true)}
+                    className="opacity-0 group-hover/name:opacity-100 p-0.5 text-slate-400 hover:text-emerald-700 transition-opacity cursor-pointer"
+                    title="Rename bucket"
+                  >
+                    <Pencil className="w-3 h-3" />
+                  </button>
+                </div>
               )}
 
               <span className="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">
@@ -461,7 +478,6 @@ export const BucketCard: React.FC<BucketCardProps> = ({
               <BucketCard
                 key={child.id}
                 node={child}
-                transactions={transactions}
                 expandedIds={expandedIds}
                 onToggleExpand={onToggleExpand}
                 onOpenInspector={onOpenInspector}
@@ -471,7 +487,6 @@ export const BucketCard: React.FC<BucketCardProps> = ({
                 onQuickUpdateAllocation={onQuickUpdateAllocation}
                 onQuickUpdateFee={onQuickUpdateFee}
                 onQuickUpdateName={onQuickUpdateName}
-                onDropTransaction={onDropTransaction}
                 onDropTransferFunds={onDropTransferFunds}
                 onOpenTransferModal={onOpenTransferModal}
                 onMoveBucket={onMoveBucket}

@@ -1,10 +1,9 @@
-import { BucketNode, Transaction } from '../types';
+import { BucketNode } from '../types';
 import { INITIAL_PRESETS } from '../data/initialData';
 
 const STORAGE_KEYS = {
   TOTAL_POOL: 'bucket_budget_total_pool',
   BUCKETS: 'bucket_budget_buckets',
-  TRANSACTIONS: 'bucket_budget_transactions',
   ACTIVE_PRESET_ID: 'bucket_budget_active_preset_id',
   BACKUP: 'bucket_budget_backup',
 };
@@ -12,7 +11,6 @@ const STORAGE_KEYS = {
 export interface StoredBudgetData {
   totalPool: number;
   buckets: BucketNode[];
-  transactions: Transaction[];
   activePresetId: string;
 }
 
@@ -21,15 +19,17 @@ export function loadStoredData(): StoredBudgetData {
     const savedPresetId = localStorage.getItem(STORAGE_KEYS.ACTIVE_PRESET_ID) || 'default';
     const savedPool = localStorage.getItem(STORAGE_KEYS.TOTAL_POOL);
     const savedBuckets = localStorage.getItem(STORAGE_KEYS.BUCKETS);
-    const savedTxs = localStorage.getItem(STORAGE_KEYS.TRANSACTIONS);
 
     if (savedPool !== null && savedBuckets !== null) {
-      return {
-        totalPool: parseFloat(savedPool) || 3000,
-        buckets: JSON.parse(savedBuckets),
-        transactions: savedTxs ? JSON.parse(savedTxs) : [],
-        activePresetId: savedPresetId,
-      };
+      const parsedBuckets = JSON.parse(savedBuckets);
+      if (Array.isArray(parsedBuckets)) {
+        const parsedPool = parseFloat(savedPool);
+        return {
+          totalPool: !isNaN(parsedPool) ? parsedPool : 3000,
+          buckets: parsedBuckets,
+          activePresetId: savedPresetId,
+        };
+      }
     }
   } catch (err) {
     console.warn('Failed to parse saved budget data from localStorage:', err);
@@ -40,29 +40,20 @@ export function loadStoredData(): StoredBudgetData {
   return {
     totalPool: defaultPreset.totalPool,
     buckets: defaultPreset.buckets,
-    transactions: defaultPreset.transactions,
     activePresetId: defaultPreset.id,
   };
 }
 
 export function saveBudgetData(data: StoredBudgetData): boolean {
-  try {
-    // Keep a rolling backup of the previous good state before overwriting
-    const currentBuckets = localStorage.getItem(STORAGE_KEYS.BUCKETS);
-    if (currentBuckets) {
-      const currentBackup = {
-        totalPool: localStorage.getItem(STORAGE_KEYS.TOTAL_POOL),
-        buckets: currentBuckets,
-        transactions: localStorage.getItem(STORAGE_KEYS.TRANSACTIONS),
-        timestamp: new Date().toISOString(),
-      };
-      localStorage.setItem(STORAGE_KEYS.BACKUP, JSON.stringify(currentBackup));
-    }
+  if (!data || !Array.isArray(data.buckets)) {
+    console.warn('Attempted to save invalid budget data:', data);
+    return false;
+  }
 
+  try {
     localStorage.setItem(STORAGE_KEYS.TOTAL_POOL, data.totalPool.toString());
     localStorage.setItem(STORAGE_KEYS.BUCKETS, JSON.stringify(data.buckets));
-    localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(data.transactions));
-    localStorage.setItem(STORAGE_KEYS.ACTIVE_PRESET_ID, data.activePresetId);
+    localStorage.setItem(STORAGE_KEYS.ACTIVE_PRESET_ID, data.activePresetId || 'default');
     return true;
   } catch (err) {
     console.error('Failed to save budget data to localStorage:', err);
@@ -102,7 +93,6 @@ export function importBudgetData(jsonText: string): StoredBudgetData {
   const importedData: StoredBudgetData = {
     totalPool: Math.max(0, budget.totalPool),
     buckets: budget.buckets,
-    transactions: Array.isArray(budget.transactions) ? budget.transactions : [],
     activePresetId: budget.activePresetId || 'imported',
   };
 
@@ -115,7 +105,6 @@ export function resetToDefaultData(): StoredBudgetData {
   const resetData: StoredBudgetData = {
     totalPool: defaultPreset.totalPool,
     buckets: defaultPreset.buckets,
-    transactions: defaultPreset.transactions,
     activePresetId: defaultPreset.id,
   };
   saveBudgetData(resetData);
@@ -127,7 +116,6 @@ export function loadPresetById(presetId: string): StoredBudgetData {
   const data: StoredBudgetData = {
     totalPool: found.totalPool,
     buckets: found.buckets,
-    transactions: found.transactions,
     activePresetId: found.id,
   };
   saveBudgetData(data);

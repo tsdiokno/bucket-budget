@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   BucketNode,
-  Transaction,
-  ActiveTab,
 } from './types';
 import {
   loadStoredData,
@@ -22,17 +20,13 @@ import {
 import { HeaderPoolBar } from './components/HeaderPoolBar';
 import { BucketTree } from './components/BucketTree';
 import { BucketModal } from './components/BucketModal';
-import { TransactionLedger } from './components/TransactionLedger';
 import { QuickTransferModal } from './components/QuickTransferModal';
 import {
-  Receipt,
   CheckCircle2,
-  FolderTree,
 } from 'lucide-react';
 
 export default function App() {
   const [data, setData] = useState(() => loadStoredData());
-  const [activeTab, setActiveTab] = useState<ActiveTab>('buckets');
   
   // Autosave status state
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
@@ -43,7 +37,7 @@ export default function App() {
   const [transferSourceNode, setTransferSourceNode] = useState<BucketNode | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Debounced auto-save changes to localStorage (400ms delay)
+  // Debounced auto-save changes to localStorage (250ms delay)
   useEffect(() => {
     setSaveStatus('saving');
     const timer = setTimeout(() => {
@@ -54,7 +48,7 @@ export default function App() {
       } else {
         setSaveStatus('error');
       }
-    }, 400);
+    }, 250);
 
     return () => clearTimeout(timer);
   }, [data]);
@@ -71,6 +65,18 @@ export default function App() {
       window.removeEventListener('pagehide', handleFlushSave);
     };
   }, [data]);
+
+  const handleManualSave = () => {
+    const ok = saveBudgetData(data);
+    if (ok) {
+      setSaveStatus('saved');
+      setLastSavedAt(new Date());
+      showToast('All changes saved to local storage');
+    } else {
+      setSaveStatus('error');
+      showToast('Failed to save data to local storage');
+    }
+  };
 
   const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -110,7 +116,7 @@ export default function App() {
     showToast('Reset budget to baseline template');
   };
 
-  const totals = calculateOverallTotals(data.totalPool, data.buckets, data.transactions);
+  const totals = calculateOverallTotals(data.totalPool, data.buckets);
 
   // Pool handlers
   const handleUpdateTotalPool = (newPool: number) => {
@@ -136,7 +142,14 @@ export default function App() {
   const handleSaveInspectedNode = (updatedNode: BucketNode) => {
     setData((prev) => ({
       ...prev,
-      buckets: updateBucketInTree(prev.buckets, updatedNode.id, () => updatedNode),
+      buckets: updateBucketInTree(prev.buckets, updatedNode.id, (old) => ({
+        ...old,
+        name: updatedNode.name,
+        notes: updatedNode.notes,
+        fee: updatedNode.fee,
+        allocated: updatedNode.allocated,
+        isMuted: updatedNode.isMuted,
+      })),
     }));
     showToast(`Updated bucket metadata for "${updatedNode.name}"`);
   };
@@ -224,23 +237,9 @@ export default function App() {
     const target = findBucketById(data.buckets, id);
     if (!target) return;
 
-    // Collect all deleted bucket IDs (target + descendants)
-    const deletedIds = new Set<string>();
-    const collectIds = (node: BucketNode) => {
-      deletedIds.add(node.id);
-      node.children?.forEach(collectIds);
-    };
-    collectIds(target);
-
-    // Unassign transactions linked to deleted buckets
-    const updatedTxs = data.transactions.map((tx) =>
-      tx.bucketId && deletedIds.has(tx.bucketId) ? { ...tx, bucketId: null } : tx
-    );
-
     setData((prev) => ({
       ...prev,
       buckets: removeBucketFromTree(prev.buckets, id),
-      transactions: updatedTxs,
     }));
     showToast(`Deleted bucket "${target.name}"`);
   };
@@ -274,23 +273,6 @@ export default function App() {
     showToast(`Moved "${movedNode.name}" ${position} ${targetName}`);
   };
 
-  // Drag-and-drop transaction categorization
-  const handleDropTransaction = (transactionId: string, targetBucketId: string) => {
-    const targetBucket = findBucketById(data.buckets, targetBucketId);
-    const tx = data.transactions.find((t) => t.id === transactionId);
-
-    if (!tx || !targetBucket) return;
-
-    setData((prev) => ({
-      ...prev,
-      transactions: prev.transactions.map((t) =>
-        t.id === transactionId ? { ...t, bucketId: targetBucketId } : t
-      ),
-    }));
-
-    showToast(`Categorized "${tx.merchant}" to "${targetBucket.name}"`);
-  };
-
   // Drag-and-drop or modal fund transfers between buckets
   const handleExecuteFundTransfer = (sourceId: string, targetId: string, amount?: number) => {
     const sourceNode = findBucketById(data.buckets, sourceId);
@@ -316,37 +298,6 @@ export default function App() {
     showToast(`Reallocated ${transferVal.toFixed(2)} from "${sourceNode.name}" to "${targetNode.name}"`);
   };
 
-  // Transaction ledger handlers
-  const handleAssignTransaction = (transactionId: string, bucketId: string | null) => {
-    setData((prev) => ({
-      ...prev,
-      transactions: prev.transactions.map((t) =>
-        t.id === transactionId ? { ...t, bucketId } : t
-      ),
-    }));
-  };
-
-  const handleAddTransaction = (newTx: Omit<Transaction, 'id'>) => {
-    const created: Transaction = {
-      ...newTx,
-      id: `tx-${Date.now()}`,
-    };
-    setData((prev) => ({
-      ...prev,
-      transactions: [created, ...prev.transactions],
-    }));
-    showToast(`Added transaction "${created.merchant}" (${created.amount})`);
-  };
-
-  const handleDeleteTransaction = (id: string) => {
-    setData((prev) => ({
-      ...prev,
-      transactions: prev.transactions.filter((t) => t.id !== id),
-    }));
-  };
-
-  const unassignedTxs = data.transactions.filter((t) => t.bucketId === null);
-
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 font-sans flex flex-col">
       
@@ -358,133 +309,30 @@ export default function App() {
         lastSavedAt={lastSavedAt}
         onUpdateTotalPool={handleUpdateTotalPool}
         onOpenAddRootBucket={handleAddRootBucket}
-        onOpenAddTransaction={() => setActiveTab('transactions')}
         onExportData={handleExportData}
         onImportData={handleImportData}
         onResetData={handleResetData}
-        unassignedCount={unassignedTxs.length}
+        onManualSave={handleManualSave}
       />
 
       {/* Main Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        
-        {/* Navigation Tabs Bar */}
-        <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setActiveTab('buckets')}
-              className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                activeTab === 'buckets'
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200/80'
-              }`}
-            >
-              <FolderTree className="w-4 h-4 text-emerald-400" />
-              <span>3-Tier Bucket Tree Canvas</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('transactions')}
-              className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                activeTab === 'transactions'
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200/80'
-              }`}
-            >
-              <Receipt className="w-4 h-4 text-amber-400" />
-              <span>Transaction Queue</span>
-              {unassignedTxs.length > 0 && (
-                <span className="bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">
-                  {unassignedTxs.length}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Tab Views */}
-        {activeTab === 'buckets' && (
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Main Tree Canvas (3 cols) */}
-            <div className="lg:col-span-3 space-y-4">
-              <BucketTree
-                buckets={data.buckets}
-                transactions={data.transactions}
-                onOpenInspector={(node) => setInspectNode(node)}
-                onAddChildBucket={handleAddChildBucket}
-                onAddRootBucket={handleAddRootBucket}
-                onDeleteBucket={handleDeleteBucket}
-                onToggleMuteBucket={handleToggleMuteBucket}
-                onQuickUpdateAllocation={handleQuickUpdateAllocation}
-                onQuickUpdateFee={handleQuickUpdateFee}
-                onQuickUpdateName={handleQuickUpdateName}
-                onDropTransaction={handleDropTransaction}
-                onDropTransferFunds={handleExecuteFundTransfer}
-                onOpenTransferModal={(node) => setTransferSourceNode(node)}
-                onMoveBucket={handleMoveBucket}
-              />
-            </div>
-
-            {/* Quick Unassigned Transactions Drawer (1 col) */}
-            <div className="lg:col-span-1 space-y-4">
-              <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-2xs text-left sticky top-24">
-                <div className="flex items-center justify-between border-b border-slate-200 pb-2.5 mb-3">
-                  <div className="flex items-center gap-2">
-                    <Receipt className="w-4 h-4 text-amber-500" />
-                    <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                      Unassigned Queue ({unassignedTxs.length})
-                    </h3>
-                  </div>
-                </div>
-
-                <p className="text-[11px] text-slate-500 mb-3">
-                  Drag items from here onto any bucket tile to categorize instantly.
-                </p>
-
-                <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
-                  {unassignedTxs.length > 0 ? (
-                    unassignedTxs.map((tx) => (
-                      <div
-                        key={tx.id}
-                        draggable
-                        onDragStart={(e) => {
-                          e.dataTransfer.setData(
-                            'application/json',
-                            JSON.stringify({
-                              type: 'transaction',
-                              transactionId: tx.id,
-                            })
-                          );
-                        }}
-                        className="p-2.5 bg-amber-50/50 hover:bg-amber-100/60 border border-amber-200 rounded-xl cursor-grab active:cursor-grabbing transition-all text-xs space-y-1"
-                      >
-                        <div className="flex items-center justify-between font-bold text-slate-900">
-                          <span className="truncate max-w-[120px]">{tx.merchant}</span>
-                          <span className="text-amber-800">-{tx.amount.toFixed(2)}</span>
-                        </div>
-                        <p className="text-[10px] text-slate-500 truncate">{tx.description}</p>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-6 text-xs text-slate-400">
-                      All pool transactions categorized!
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'transactions' && (
-          <TransactionLedger
-            transactions={data.transactions}
+        <div className="w-full space-y-4">
+          <BucketTree
             buckets={data.buckets}
-            onAssignTransaction={handleAssignTransaction}
-            onAddTransaction={handleAddTransaction}
-            onDeleteTransaction={handleDeleteTransaction}
+            onOpenInspector={(node) => setInspectNode(node)}
+            onAddChildBucket={handleAddChildBucket}
+            onAddRootBucket={handleAddRootBucket}
+            onDeleteBucket={handleDeleteBucket}
+            onToggleMuteBucket={handleToggleMuteBucket}
+            onQuickUpdateAllocation={handleQuickUpdateAllocation}
+            onQuickUpdateFee={handleQuickUpdateFee}
+            onQuickUpdateName={handleQuickUpdateName}
+            onDropTransferFunds={handleExecuteFundTransfer}
+            onOpenTransferModal={(node) => setTransferSourceNode(node)}
+            onMoveBucket={handleMoveBucket}
           />
-        )}
+        </div>
       </main>
 
       {/* Bucket Inspector Modal */}
