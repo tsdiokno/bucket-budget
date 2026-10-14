@@ -1,6 +1,8 @@
 # 🪣 Bucket Budget
 
-A modern, offline-first, single-page application for structured envelope budgeting. Organizes income into an intuitive **3-tier hierarchical bucket tree** with dedicated fee accounting, inline PEMDAS math calculation, inter-bucket fund rebalancing, and zero backend server dependencies.
+A fast, offline-first envelope budgeting tool built on an opinionated **3-tier hierarchy**. Direct your income into structured buckets with explicit fee accounting, inline PEMDAS math, and zero server dependencies.
+
+![Bucket Budget Preview](./beautified-screenshot.png)
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![React](https://img.shields.io/badge/React-18.x-61dafb.svg)
@@ -9,84 +11,56 @@ A modern, offline-first, single-page application for structured envelope budgeti
 
 ---
 
-## ✨ Features
+## 🧭 Financial Philosophy & Core Assumptions
 
-- **3-Tier Hierarchical Buckets**: Structured 3-level envelope tree (Tier 1: Master Pillar ➔ Tier 2: Functional Area ➔ Tier 3: Specific Line Item). Keeps budgeting structured, disciplined, and readable without unbounded, unwieldy nesting.
-- **Live Allocation Pool**: Real-time pool bar showing total available funds, allocated amounts, explicit fee deductions, and remaining unallocated balance.
-- **Inline PEMDAS Math Engine**: Type arithmetic directly into any numeric field (e.g., `(1200 - 150) * 0.9` or `450 + 25 * 3`) with instant evaluation on Enter or blur.
-- **Dynamic Scenario Muting**: Instantly mute or unmute any bucket to exclude its funds from calculations and run "what-if" scenarios.
-- **Fund Transfers & Rebalancing**: Transfer funds between buckets via quick drag-and-drop or the transfer dialog.
-- **Debounced Autosave Engine**: Automatically persists state to `localStorage` with a 250ms debounce, page unload flush listeners (`beforeunload`, `pagehide`), and a live status badge.
-- **Data Portability**: Export and import full budget backups as single `.json` files anytime.
-- **100% Offline-First**: Runs entirely in the client browser with zero server dependencies, telemetry, or tracking.
+Bucket Budget is intentionally **opinionated and prescriptive**. It is built on five financial management assumptions:
 
----
-
-## 💡 Practical Financial Management Use Cases
-
-### For Individuals & Households
-- **Zero-Based Envelope Budgeting**: Allocate 100% of monthly take-home pay down to zero unallocated dollars across living essentials, debt reduction, savings goals, and discretionary spending.
-- **Granular Expense & Fee Tracking**: Separate core expenses from hidden costs by dedicating fee lines to HOA dues, escrow fees, service subscriptions, and banking charges.
-- **"What-If" Scenario Planning**: Toggle bucket muting to simulate sudden life changes (e.g., test how eliminating dining out or gym memberships affects emergency fund burn rates during a career transition).
-- **Variable Income & Paycheck Distribution**: Freelancers and commission-based earners can enter variable monthly earnings into the pool bar and distribute funds strictly by hierarchy and priority.
-- **Savings Goals & Sinking Funds**: Build structured sinking funds (e.g., *Future Planning* ➔ *Annual Expenses* ➔ *Car Insurance / Holiday Travel*) with progress bars and rollups.
-
-### For Others (Freelancers, Small Businesses, Project Managers & Nonprofits)
-- **Freelancers & Solopreneurs (Profit First / Tax Reserves)**: Partition gross invoice receipts into fixed business percentages (e.g., Tier 1: *Gross Revenue* ➔ Tier 2: *Tax Withholding / Operating Expenses / Owner Draw* ➔ Tier 3: *Software Tools, CPA, Hardware*).
-- **Small Business Departmental Allotments**: Allocate an operating budget across teams (e.g., *Marketing* ➔ *Paid Ads / Creative Production*; *Operations* ➔ *Logistics / Facilities*) within a hard spending ceiling.
-- **Project & Event Financial Scoping**: Model clear cost breakdowns for events, client deliverables, or construction/renovation projects with strict tier boundaries and real-time fee tracking.
-- **Nonprofits & Grant Allocation**: Ring-fence restricted donor or grant funding into designated program categories and track overhead/administrative fee percentages with offline, auditable `.json` export records.
+1. **Finite, Zero-Sum Allocation**: Money is limited. Every dollar assigned to a bucket directly claims a portion of the shared pool. You allocate funds before spending, not as an afterthought.
+2. **Strict 3-Tier Structure (Not Infinite)**: Unbounded nesting breeds chaos; flat lists obscure hierarchy. Exactly three tiers (Tier 1: Master Pillar ➔ Tier 2: Category ➔ Tier 3: Line Item) enforce discipline and prevent decision fatigue.
+3. **Intentional Planning Over Bookkeeping**: This is a forward-looking allocation engine, not a receipt-tracking log. It rejects tedious transaction queues in favor of high-level fund distribution and inter-bucket transfers.
+4. **Explicit Overhead & Fees**: Hidden transaction fees, escrow, and administrative overhead must be isolated alongside allocations rather than buried inside net line items.
+5. **Dynamic Solvency Testing**: Budgets must adapt to adversity. Buckets can be muted on the fly to simulate "what-if" cutbacks and emergency scenarios without dismantling your baseline plan.
 
 ---
 
-## 🚀 Standalone Single-File Distribution
+## 💡 Practical Use Cases
 
-Bucket Budget can be compiled into a **single, portable `.html` file** (`bucket-budget-standalone.html`) containing all React code, styling, and icons.
-
-- **Zero Installation**: Download `bucket-budget-standalone.html` and double-click to run in any modern web browser.
-- **Zero Server Required**: Operates offline over `file:///` protocols without Node.js or web server runtime.
+- **Individuals & Households**: Zero-based envelope budgeting, sinking funds for annual obligations, fee-separated living expenses, and "what-if" contingency modeling.
+- **Freelancers & Solopreneurs**: Partitioning variable client invoices into tax reserves, operational overhead, and owner compensation (Profit First).
+- **Small Teams & Projects**: Managing departmental allotments or event/renovation cost scopes under a hard financial ceiling.
+- **Nonprofits**: Ring-fencing restricted donor funds with auditable administrative fee ratios and offline JSON exports.
 
 ---
 
-## 🛠️ Local Development Setup
+## ✨ Key Features
 
-### Prerequisites
-- **Node.js**: v18.x or later
-- **npm**: v9.x or later
+- **3-Tier Tree**: Master pillars, sub-categories, and leaf line items with automatic rollup totals.
+- **Live Pool Balance**: Real-time visibility into allocated funds, dedicated fees, and unallocated surplus or deficit.
+- **Inline PEMDAS Arithmetic**: Type math expressions directly into any amount field (e.g., `(1200 - 150) * 0.9` or `450 + 25 * 3`).
+- **Drag-and-Drop Rebalancing**: Shift funds between buckets seamlessly or use the quick transfer dialog.
+- **100% Offline & Private**: Debounced `localStorage` autosave, unload flush protection, and single-file `.json` backup/restore.
 
-### Installation
+---
+
+## 🚀 Quickstart
+
+Run locally or compile into a **single, portable `.html` file** that works anywhere without a web server:
+
 ```bash
-# Clone repository
+# Clone & install
 git clone https://github.com/your-username/bucket-budget.git
 cd bucket-budget
-
-# Install dependencies
 npm install
 
 # Start local dev server (port 3000)
 npm run dev
-```
 
-### Build & Lint
-```bash
-# Verify TypeScript types and code formatting
-npm run lint
-
-# Build production distribution
+# Build standalone distribution
 npm run build
 ```
 
 ---
 
-## 🧰 Built With
-
-- **Framework**: [React 18](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
-- **Build Tool**: [Vite 6](https://vitejs.dev/) + [vite-plugin-singlefile](https://github.com/richardtallent/vite-plugin-singlefile)
-- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
-- **Icons**: [Lucide React](https://lucide.dev/)
-
----
-
 ## 📄 License
 
-Distributed under the MIT License. See `LICENSE` for more details.
+Distributed under the MIT License.
