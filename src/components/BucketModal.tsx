@@ -14,8 +14,7 @@ interface BucketModalProps {
   node: BucketNode | null;
   allBuckets: BucketNode[];
   onClose: () => void;
-  onSave: (updatedNode: BucketNode) => void;
-  onMoveBucket: (movedId: string, newParentId: string | null) => void;
+  onSave: (updatedNode: BucketNode, newParentId?: string | null) => void;
 }
 
 export const BucketModal: React.FC<BucketModalProps> = ({
@@ -24,7 +23,6 @@ export const BucketModal: React.FC<BucketModalProps> = ({
   allBuckets,
   onClose,
   onSave,
-  onMoveBucket,
 }) => {
   if (!isOpen || !node) return null;
 
@@ -58,11 +56,13 @@ export const BucketModal: React.FC<BucketModalProps> = ({
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Check if parent placement changed
     const currentParent = node.parentId || '';
-    if (selectedParentId !== currentParent) {
-      onMoveBucket(node.id, selectedParentId === '' ? null : selectedParentId);
-    }
+    const newParentId =
+      selectedParentId !== currentParent
+        ? selectedParentId === ''
+          ? null
+          : selectedParentId
+        : undefined;
 
     const hasChildren = !!(node.children && node.children.length > 0);
     const updated: BucketNode = {
@@ -74,7 +74,7 @@ export const BucketModal: React.FC<BucketModalProps> = ({
       isMuted,
     };
 
-    onSave(updated);
+    onSave(updated, newParentId);
     onClose();
   };
 

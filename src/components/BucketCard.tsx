@@ -28,8 +28,8 @@ interface BucketCardProps {
   onAddChildBucket: (parentNode: BucketNode) => void;
   onDeleteBucket: (id: string) => void;
   onToggleMuteBucket: (id: string) => void;
-  onQuickUpdateAllocation: (id: string, newAllocated: number) => void;
-  onQuickUpdateFee: (id: string, newFee: number) => void;
+  onQuickUpdateAllocation: (id: string, newAllocated: number, sessionKey?: string) => void;
+  onQuickUpdateFee: (id: string, newFee: number, sessionKey?: string) => void;
   onQuickUpdateName: (id: string, newName: string) => void;
   onDropTransferFunds: (sourceBucketId: string, targetBucketId: string, amount?: number) => void;
   onOpenTransferModal: (sourceBucket: BucketNode) => void;
@@ -376,7 +376,8 @@ export const BucketCard: React.FC<BucketCardProps> = ({
               <div className="flex items-center gap-1 justify-end">
                 <MathInput
                   value={node.allocated ?? 0}
-                  onChangeValue={(newVal) => onQuickUpdateAllocation(node.id, newVal)}
+                  onChangeValue={(newVal, sessionKey) => onQuickUpdateAllocation(node.id, newVal, sessionKey)}
+                  liveHistoryKey={`alloc:${node.id}`}
                   className="w-20 sm:w-24 focus:w-40 text-right text-xs font-bold text-emerald-800 bg-white border border-slate-300 rounded px-1.5 py-0.5 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                   placeholder="0"
                   title="Allocated fund — supports PEMDAS math, e.g. (1+1-500+3)/6"
@@ -397,7 +398,8 @@ export const BucketCard: React.FC<BucketCardProps> = ({
             <div className="flex items-center gap-1 justify-end">
               <MathInput
                 value={node.fee ?? 0}
-                onChangeValue={(newVal) => onQuickUpdateFee(node.id, newVal)}
+                onChangeValue={(newVal, sessionKey) => onQuickUpdateFee(node.id, newVal, sessionKey)}
+                liveHistoryKey={`fee:${node.id}`}
                 className="w-16 sm:w-20 focus:w-32 text-right text-xs font-medium text-amber-800 bg-white border border-slate-300 rounded px-1.5 py-0.5 focus:ring-1 focus:ring-amber-500 focus:outline-none"
                 placeholder="0"
                 title="Dedicated fee — supports PEMDAS math, e.g. 50*1.05"

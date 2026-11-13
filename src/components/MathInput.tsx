@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { evaluateMathExpression, hasMathExpression, cleanFloat } from '../utils/mathParser';
+import { useHistoryRevision } from '../hooks/useBudgetHistory';
 import { Calculator } from 'lucide-react';
+
+let mathSessionCounter = 0;
 
 interface MathInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange' | 'onBlur' | 'onFocus' | 'onKeyDown'> {
   value: number;
-  onChangeValue: (val: number) => void;
+  onChangeValue: (val: number, sessionKey?: string) => void;
+  liveHistoryKey?: string;
+  onDone?: () => void;
   className?: string;
   placeholder?: string;
   title?: string;
@@ -16,6 +21,8 @@ interface MathInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement
 export const MathInput: React.FC<MathInputProps> = ({
   value,
   onChangeValue,
+  liveHistoryKey,
+  onDone,
   className = '',
   placeholder = '0',
   title = 'Accepts math formulas (e.g. (1+1-500+3)/6)',
@@ -24,9 +31,17 @@ export const MathInput: React.FC<MathInputProps> = ({
   step,
   ...rest
 }) => {
+  const historyRevision = useHistoryRevision();
+  const prevHistoryRevisionRef = useRef<number>(historyRevision);
+
   const [text, setText] = useState<string>(() => (value ?? 0).toString());
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const initialValueRef = useRef<number>(value ?? 0);
+  const sessionKeyRef = useRef<string | undefined>(
+    liveHistoryKey ? `${liveHistoryKey}:${++mathSessionCounter}` : undefined
+  );
+  const dirtyInSessionRef = useRef<boolean>(false);
 
   // Sync with external value changes if not focused
   useEffect(() => {
@@ -35,15 +50,35 @@ export const MathInput: React.FC<MathInputProps> = ({
     }
   }, [value, isFocused]);
 
+  // Immediately sync text and reset session when an Undo/Redo occurs, even while focused
+  useEffect(() => {
+    if (historyRevision !== prevHistoryRevisionRef.current) {
+      prevHistoryRevisionRef.current = historyRevision;
+      const nextVal = value ?? 0;
+      setText(nextVal.toString());
+      initialValueRef.current = nextVal;
+      dirtyInSessionRef.current = false;
+      if (liveHistoryKey) {
+        sessionKeyRef.current = `${liveHistoryKey}:${++mathSessionCounter}`;
+      }
+    }
+  }, [historyRevision, value, liveHistoryKey]);
+
   // Compute live expression preview
   const isExpression = hasMathExpression(text);
   const liveEval = isExpression ? evaluateMathExpression(text) : null;
+  const isIncompleteExpression = isFocused && isExpression && (!liveEval || !liveEval.success);
+
+  const emitChange = (nextVal: number) => {
+    dirtyInSessionRef.current = true;
+    onChangeValue(nextVal, sessionKeyRef.current);
+  };
 
   const commitValue = (rawStr: string) => {
     const trimmed = rawStr.trim();
     if (!trimmed) {
       setText('0');
-      onChangeValue(0);
+      emitChange(0);
       return;
     }
 
@@ -53,9 +88,9 @@ export const MathInput: React.FC<MathInputProps> = ({
         let finalVal = res.value;
         if (!allowNegative && finalVal < 0) finalVal = 0;
         setText(finalVal.toString());
-        onChangeValue(finalVal);
+        emitChange(finalVal);
       } else {
-        // Incomplete or invalid formula on blur: fall back to previous valid value
+        // Incomplete or invalid formula on blur: revert back to pre-focus/previous valid value
         setText((value ?? 0).toString());
       }
     } else {
@@ -64,26 +99,43 @@ export const MathInput: React.FC<MathInputProps> = ({
         let finalVal = cleanFloat(parsed);
         if (!allowNegative && finalVal < 0) finalVal = 0;
         setText(finalVal.toString());
-        onChangeValue(finalVal);
+        emitChange(finalVal);
       } else {
         setText((value ?? 0).toString());
       }
     }
   };
 
+  const handleFocus = () => {
+    setIsFocused(true);
+    initialValueRef.current = value ?? 0;
+    dirtyInSessionRef.current = false;
+    if (liveHistoryKey) {
+      sessionKeyRef.current = `${liveHistoryKey}:${++mathSessionCounter}`;
+    }
+  };
+
   const handleBlur = () => {
     setIsFocused(false);
     commitValue(text);
+    dirtyInSessionRef.current = false;
+    onDone?.();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       commitValue(text);
+      dirtyInSessionRef.current = false;
       inputRef.current?.blur();
     } else if (e.key === 'Escape') {
       e.preventDefault();
-      setText((value ?? 0).toString());
+      const orig = initialValueRef.current;
+      setText(orig.toString());
+      if (dirtyInSessionRef.current) {
+        onChangeValue(orig, sessionKeyRef.current);
+        dirtyInSessionRef.current = false;
+      }
       inputRef.current?.blur();
     }
   };
@@ -94,7 +146,7 @@ export const MathInput: React.FC<MathInputProps> = ({
 
     const trimmed = val.trim();
     if (!trimmed) {
-      onChangeValue(0);
+      emitChange(0);
       return;
     }
 
@@ -103,14 +155,14 @@ export const MathInput: React.FC<MathInputProps> = ({
       if (res.success) {
         let finalVal = res.value;
         if (!allowNegative && finalVal < 0) finalVal = 0;
-        onChangeValue(cleanFloat(finalVal));
+        emitChange(cleanFloat(finalVal));
       }
     } else {
       const parsed = parseFloat(trimmed);
       if (!isNaN(parsed)) {
         let finalVal = parsed;
         if (!allowNegative && finalVal < 0) finalVal = 0;
-        onChangeValue(cleanFloat(finalVal));
+        emitChange(cleanFloat(finalVal));
       }
     }
   };
@@ -125,11 +177,13 @@ export const MathInput: React.FC<MathInputProps> = ({
         inputMode="text"
         value={text}
         onChange={handleChange}
-        onFocus={() => setIsFocused(true)}
+        onFocus={handleFocus}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         title={title}
+        data-live-math-input={liveHistoryKey ? 'true' : undefined}
+        data-math-incomplete={isIncompleteExpression ? 'true' : undefined}
         className={`${className} transition-all duration-150`}
         {...rest}
       />

@@ -17,6 +17,8 @@ import {
   Upload,
   HardDrive,
   Save,
+  Undo2,
+  Redo2,
 } from 'lucide-react';
 
 interface HeaderPoolBarProps {
@@ -24,7 +26,13 @@ interface HeaderPoolBarProps {
   activePresetId: string;
   saveStatus: 'saved' | 'saving' | 'error';
   lastSavedAt: Date | null;
-  onUpdateTotalPool: (newPool: number) => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
+  undoLabel?: string | null;
+  redoLabel?: string | null;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  onUpdateTotalPool: (newPool: number, sessionKey?: string) => void;
   onOpenAddRootBucket: () => void;
   onExportData: () => void;
   onImportData: (file: File) => void;
@@ -37,6 +45,12 @@ export const HeaderPoolBar: React.FC<HeaderPoolBarProps> = ({
   activePresetId,
   saveStatus,
   lastSavedAt,
+  canUndo = false,
+  canRedo = false,
+  undoLabel,
+  redoLabel,
+  onUndo,
+  onRedo,
   onUpdateTotalPool,
   onOpenAddRootBucket,
   onExportData,
@@ -152,6 +166,41 @@ export const HeaderPoolBar: React.FC<HeaderPoolBarProps> = ({
 
           {/* Action Buttons & Data Controls */}
           <div className="flex items-center flex-wrap gap-2 sm:gap-2.5">
+            {/* Undo / Redo Controls */}
+            <div className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 p-0.5">
+              <button
+                type="button"
+                onClick={onUndo}
+                disabled={!canUndo}
+                className={`inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  canUndo
+                    ? 'text-slate-700 hover:bg-white hover:text-slate-900 hover:shadow-2xs cursor-pointer'
+                    : 'text-slate-300 cursor-not-allowed'
+                }`}
+                title={canUndo && undoLabel ? `Undo: ${undoLabel} (Ctrl+Z)` : 'Nothing to undo (Ctrl+Z)'}
+                aria-label="Undo"
+              >
+                <Undo2 className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Undo</span>
+              </button>
+              <div className="w-px h-4 bg-slate-200 mx-0.5" />
+              <button
+                type="button"
+                onClick={onRedo}
+                disabled={!canRedo}
+                className={`inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  canRedo
+                    ? 'text-slate-700 hover:bg-white hover:text-slate-900 hover:shadow-2xs cursor-pointer'
+                    : 'text-slate-300 cursor-not-allowed'
+                }`}
+                title={canRedo && redoLabel ? `Redo: ${redoLabel} (Ctrl+Y)` : 'Nothing to redo (Ctrl+Y)'}
+                aria-label="Redo"
+              >
+                <Redo2 className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Redo</span>
+              </button>
+            </div>
+
             <button
               onClick={onOpenAddRootBucket}
               className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-xs font-medium rounded-lg transition-colors cursor-pointer"
@@ -255,7 +304,9 @@ export const HeaderPoolBar: React.FC<HeaderPoolBarProps> = ({
                 <div className="flex items-center gap-1 mt-1">
                   <MathInput
                     value={totals.totalPool}
-                    onChangeValue={(newVal) => onUpdateTotalPool(newVal)}
+                    onChangeValue={(newVal, sessionKey) => onUpdateTotalPool(newVal, sessionKey)}
+                    liveHistoryKey="total-pool"
+                    onDone={() => setIsEditingPool(false)}
                     className="w-full text-base font-bold text-slate-900 border border-emerald-400 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     placeholder="0"
                     title="Total pool amount — supports PEMDAS math e.g. 2500+500"

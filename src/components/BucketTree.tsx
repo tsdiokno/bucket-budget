@@ -10,8 +10,8 @@ interface BucketTreeProps {
   onAddRootBucket: () => void;
   onDeleteBucket: (id: string) => void;
   onToggleMuteBucket: (id: string) => void;
-  onQuickUpdateAllocation: (id: string, newAllocated: number) => void;
-  onQuickUpdateFee: (id: string, newFee: number) => void;
+  onQuickUpdateAllocation: (id: string, newAllocated: number, sessionKey?: string) => void;
+  onQuickUpdateFee: (id: string, newFee: number, sessionKey?: string) => void;
   onQuickUpdateName: (id: string, newName: string) => void;
   onDropTransferFunds: (sourceBucketId: string, targetBucketId: string, amount?: number) => void;
   onOpenTransferModal: (sourceBucket: BucketNode) => void;
