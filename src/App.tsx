@@ -313,7 +313,7 @@ export default function App() {
     commitChange(
       (prev) => ({
         ...prev,
-        buckets: addChildBucketToTree(prev.buckets, parentNode.id, newBucket),
+        buckets: addChildBucketToTree(prev.buckets, parentNode.id, newBucket, true),
       }),
       `Add ${levelLabel} under "${parentNode.name}"`
     );

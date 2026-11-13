@@ -152,12 +152,15 @@ export function updateBucketInTree(
 }
 
 /**
- * Adds a new child bucket under a specific parent ID or at root if parentId is null
+ * Adds a new child bucket under a specific parent ID or at root if parentId is null.
+ * When transferParentAllocation is true and the parent has no existing children,
+ * the parent's allocated balance moves into the newly introduced child bucket.
  */
 export function addChildBucketToTree(
   nodes: BucketNode[],
   parentId: string | null,
-  newBucket: BucketNode
+  newBucket: BucketNode,
+  transferParentAllocation = false
 ): BucketNode[] {
   if (parentId === null) {
     return [newBucket, ...nodes];
@@ -166,15 +169,21 @@ export function addChildBucketToTree(
   return nodes.map((node) => {
     if (node.id === parentId) {
       const existingChildren = node.children || [];
+      const shouldExplode = transferParentAllocation && existingChildren.length === 0;
+      const childToInsert: BucketNode = shouldExplode
+        ? { ...newBucket, allocated: node.allocated ?? 0 }
+        : newBucket;
+
       return {
         ...node,
-        children: [newBucket, ...existingChildren],
+        allocated: shouldExplode ? 0 : node.allocated,
+        children: [childToInsert, ...existingChildren],
       };
     }
     if (node.children && node.children.length > 0) {
       return {
         ...node,
-        children: addChildBucketToTree(node.children, parentId, newBucket),
+        children: addChildBucketToTree(node.children, parentId, newBucket, transferParentAllocation),
       };
     }
     return node;
