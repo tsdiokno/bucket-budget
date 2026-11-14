@@ -422,7 +422,7 @@ export default function App() {
 
   return (
     <HistoryRevisionContext.Provider value={historyRevision}>
-      <div className="min-h-screen bg-slate-100 text-slate-900 font-sans flex flex-col">
+      <div className="min-h-screen bg-[#F0EDE5] text-[#1A1A18] font-sans flex flex-col">
         
         {/* Top Header & Pool Metrics Bar */}
         <HeaderPoolBar
@@ -484,8 +484,8 @@ export default function App() {
 
         {/* Toast Notification Banner */}
         {toastMessage && (
-          <div className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-xl flex items-center gap-2 border border-slate-800 animate-in slide-in-from-bottom-2 duration-200">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div className="fixed bottom-5 right-5 z-50 bg-[#1A1A18] text-[#F0EDE5] text-xs font-semibold px-4 py-3 rounded-xl shadow-xl flex items-center gap-2 border border-[#2E2E2C] animate-in slide-in-from-bottom-2 duration-200">
+            <CheckCircle2 className="w-4 h-4 text-[#C5C3BE] shrink-0" />
             <span>{toastMessage}</span>
           </div>
         )}

@@ -6,15 +6,11 @@ import { MathInput } from './MathInput';
 import {
   ChevronRight,
   ChevronDown,
-  Plus,
   Edit3,
   Trash2,
   FileText,
-  Tag,
   ArrowRightLeft,
   GripVertical,
-  Layers,
-  Layers3,
   VolumeX,
   Pencil,
   Check,
@@ -191,13 +187,13 @@ export const BucketCard: React.FC<BucketCardProps> = ({
       {/* Top Drop Indicator Line */}
       {dropPosition === 'before' && (
         <div className="absolute -top-2 left-0 right-0 z-30 flex items-center gap-2 pointer-events-none">
-          <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-sm" />
-          <div className="h-1 flex-1 bg-emerald-500 rounded-full shadow-sm" />
-          <span className="text-[10px] font-extrabold bg-emerald-600 text-white px-2.5 py-0.5 rounded-full shadow-sm">
-            Place Before "{node.name}"
+          <div className="h-2.5 w-2.5 rounded-full bg-[#1A1A18] shadow-sm" />
+          <div className="h-1 flex-1 bg-[#1A1A18] rounded-full shadow-sm" />
+          <span className="text-[10px] font-extrabold bg-[#1A1A18] text-[#F0EDE5] px-2.5 py-0.5 rounded-full shadow-sm">
+            Place Before &ldquo;{node.name}&rdquo;
           </span>
-          <div className="h-1 flex-1 bg-emerald-500 rounded-full shadow-sm" />
-          <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-sm" />
+          <div className="h-1 flex-1 bg-[#1A1A18] rounded-full shadow-sm" />
+          <div className="h-2.5 w-2.5 rounded-full bg-[#1A1A18] shadow-sm" />
         </div>
       )}
 
@@ -207,21 +203,21 @@ export const BucketCard: React.FC<BucketCardProps> = ({
         onDrop={handleDrop}
         className={`rounded-xl transition-all duration-700 border text-left ${
           highlightActive
-            ? 'ring-2 ring-emerald-500/90 shadow-lg shadow-emerald-500/10'
+            ? 'ring-2 ring-[#1A1A18] shadow-md'
             : 'ring-0 ring-transparent shadow-none'
         } ${
           node.isMuted
-            ? 'bg-slate-100/90 border-dashed border-amber-300 opacity-75'
+            ? 'bg-[#C5C3BE]/30 border-dashed border-[#2E2E2C] opacity-65'
             : isLevel1
-            ? 'bg-white border-slate-200 shadow-xs p-4 my-3'
+            ? 'bg-[#F0EDE5] border-[#2E2E2C]/35 shadow-xs p-4 my-3'
             : isLevel2
-            ? 'bg-slate-50/80 border-slate-200/90 p-3.5 my-2.5 ml-3 sm:ml-5'
-            : 'bg-slate-100/70 border-slate-200/80 p-3 my-2 ml-4 sm:ml-8'
+            ? 'bg-[#C5C3BE]/22 border-[#C5C3BE] p-3.5 my-2.5 ml-3 sm:ml-5'
+            : 'bg-[#C5C3BE]/40 border-[#C5C3BE] p-3 my-2 ml-4 sm:ml-8'
         } ${
           dropPosition === 'inside'
-            ? 'ring-2 ring-emerald-500 bg-emerald-50/70 border-emerald-400 scale-[1.005]'
+            ? 'ring-2 ring-[#1A1A18] bg-[#C5C3BE]/45 border-[#1A1A18] scale-[1.005]'
             : dropPosition === 'before' || dropPosition === 'after'
-            ? 'border-emerald-400 bg-emerald-50/20'
+            ? 'border-[#1A1A18] bg-[#C5C3BE]/30'
             : ''
         }`}
       >
@@ -235,7 +231,7 @@ export const BucketCard: React.FC<BucketCardProps> = ({
             <div
               draggable
               onDragStart={handleDragStartBucketNode}
-              className="p-1 text-slate-400 hover:text-emerald-700 cursor-grab active:cursor-grabbing transition-colors rounded hover:bg-slate-200/50"
+              className="p-1 text-[#2E2E2C]/60 hover:text-[#1A1A18] cursor-grab active:cursor-grabbing transition-colors rounded hover:bg-[#C5C3BE]/40"
               title="Drag to move or re-order this bucket"
             >
               <GripVertical className="w-4 h-4" />
@@ -245,28 +241,13 @@ export const BucketCard: React.FC<BucketCardProps> = ({
           {hasChildren ? (
             <button
               onClick={() => onToggleExpand(node.id)}
-              className="p-1 text-slate-500 hover:text-slate-900 rounded hover:bg-slate-200/60 transition-colors cursor-pointer"
+              className="p-1 text-[#2E2E2C] hover:text-[#1A1A18] rounded hover:bg-[#C5C3BE]/40 transition-colors cursor-pointer"
             >
               {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
             </button>
           ) : (
             <span className="w-6"></span>
           )}
-
-          {/* Level Badge Icon */}
-          <div
-            className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 font-medium ${
-              node.isMuted
-                ? 'bg-amber-100 text-amber-800'
-                : isLevel1
-                ? 'bg-slate-900 text-emerald-400'
-                : isLevel2
-                ? 'bg-emerald-100 text-emerald-800'
-                : 'bg-amber-100 text-amber-800'
-            }`}
-          >
-            {isLevel1 ? <Layers className="w-3.5 h-3.5" /> : isLevel2 ? <Layers3 className="w-3.5 h-3.5" /> : <Tag className="w-3.5 h-3.5" />}
-          </div>
 
           {/* Editable Name & Notes */}
           <div className="flex-1 min-w-0">
@@ -285,7 +266,7 @@ export const BucketCard: React.FC<BucketCardProps> = ({
                         setIsEditingName(false);
                       }
                     }}
-                    className="text-sm font-bold text-slate-900 border border-emerald-500 rounded px-1.5 py-0.5 focus:outline-none bg-white ring-1 ring-emerald-400"
+                    className="text-sm font-bold text-[#1A1A18] border border-[#1A1A18] rounded px-1.5 py-0.5 focus:outline-none bg-[#F0EDE5] ring-1 ring-[#1A1A18]"
                     autoFocus
                   />
                   <button
@@ -294,7 +275,7 @@ export const BucketCard: React.FC<BucketCardProps> = ({
                       e.preventDefault();
                       handleSaveName();
                     }}
-                    className="p-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded cursor-pointer transition-colors"
+                    className="p-1 bg-[#1A1A18] hover:bg-[#2E2E2C] text-[#F0EDE5] rounded cursor-pointer transition-colors"
                     title="Save name"
                   >
                     <Check className="w-3 h-3" />
@@ -304,16 +285,16 @@ export const BucketCard: React.FC<BucketCardProps> = ({
                 <div className="flex items-center gap-1 group/name">
                   <h3
                     onClick={() => setIsEditingName(true)}
-                    className={`font-bold truncate text-slate-900 cursor-pointer hover:text-emerald-700 transition-colors ${
-                      isLevel1 ? 'text-base' : isLevel2 ? 'text-sm' : 'text-xs'
-                    } ${node.isMuted ? 'line-through text-slate-500' : ''}`}
+                    className={`font-bold truncate text-[#1A1A18] cursor-pointer hover:text-[#2E2E2C] transition-colors ${
+                      isLevel1 ? 'text-base' : isLevel2 ? 'text-sm' : 'text-xs text-[#2E2E2C]'
+                    } ${node.isMuted ? 'line-through text-[#2E2E2C]/65' : ''}`}
                     title="Click to rename bucket"
                   >
                     {node.name}
                   </h3>
                   <button
                     onClick={() => setIsEditingName(true)}
-                    className="opacity-0 group-hover/name:opacity-100 p-0.5 text-slate-400 hover:text-emerald-700 transition-opacity cursor-pointer"
+                    className="opacity-0 group-hover/name:opacity-100 p-0.5 text-[#2E2E2C]/65 hover:text-[#1A1A18] transition-opacity cursor-pointer"
                     title="Rename bucket"
                   >
                     <Pencil className="w-3 h-3" />
@@ -321,13 +302,13 @@ export const BucketCard: React.FC<BucketCardProps> = ({
                 </div>
               )}
 
-              <span className="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">
+              <span className="text-[10px] uppercase font-semibold text-[#2E2E2C]/65 tracking-wider">
                 {levelBadgeLabel}
               </span>
 
               {node.isMuted && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full">
-                  <VolumeX className="w-3 h-3 text-amber-700" />
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#1A1A18] bg-[#C5C3BE]/60 border border-[#2E2E2C]/40 px-2 py-0.5 rounded-full">
+                  <VolumeX className="w-3 h-3 text-[#2E2E2C]" />
                   Muted
                 </span>
               )}
@@ -337,24 +318,24 @@ export const BucketCard: React.FC<BucketCardProps> = ({
             {Boolean(node.notes && node.notes.trim().length > 0) && (
               <div className="block w-full mt-2 relative group">
                 <div
-                  className="inline-flex items-center gap-1.5 max-w-full px-2.5 py-1 rounded-lg bg-amber-50/90 hover:bg-amber-100/90 border border-amber-200/90 text-amber-950 text-xs font-medium cursor-help transition-colors shadow-2xs"
+                  className="inline-flex items-center gap-1.5 max-w-full px-2.5 py-1 rounded-lg bg-[#C5C3BE]/30 hover:bg-[#C5C3BE]/50 border border-[#C5C3BE] text-[#1A1A18] text-xs font-medium cursor-help transition-colors"
                 >
-                  <FileText className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                  <span className="block truncate max-w-[220px] sm:max-w-[340px] font-medium text-amber-900">
+                  <FileText className="w-3.5 h-3.5 text-[#2E2E2C] shrink-0" />
+                  <span className="block truncate max-w-[220px] sm:max-w-[340px] font-medium text-[#1A1A18]">
                     {node.notes}
                   </span>
-                  <span className="text-[10px] font-semibold bg-amber-200/80 text-amber-800 px-1.5 py-0.2 rounded-full shrink-0 group-hover:bg-amber-300/80 transition-colors">
+                  <span className="text-[10px] font-semibold bg-[#2E2E2C] text-[#F0EDE5] px-1.5 py-0.2 rounded-full shrink-0 group-hover:bg-[#1A1A18] transition-colors">
                     Note
                   </span>
                 </div>
 
                 {/* Pure CSS Non-Blocking Hover Tooltip */}
-                <div className="pointer-events-none absolute left-0 top-full mt-1.5 w-72 p-3 bg-slate-900/95 backdrop-blur-xs text-slate-100 rounded-xl shadow-xl text-xs z-50 border border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150">
-                  <div className="flex items-center gap-1.5 font-bold text-amber-400 mb-1 border-b border-slate-800 pb-1.5">
-                    <FileText className="w-3.5 h-3.5" />
+                <div className="pointer-events-none absolute left-0 top-full mt-1.5 w-72 p-3 bg-[#1A1A18] text-[#F0EDE5] rounded-xl shadow-xl text-xs z-50 border border-[#2E2E2C] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150">
+                  <div className="flex items-center gap-1.5 font-bold text-[#F0EDE5] mb-1 border-b border-[#2E2E2C] pb-1.5">
+                    <FileText className="w-3.5 h-3.5 text-[#C5C3BE]" />
                     <span>Bucket Note / Payment Memo</span>
                   </div>
-                  <p className="text-slate-200 leading-relaxed whitespace-pre-wrap font-normal break-words">
+                  <p className="text-[#C5C3BE] leading-relaxed whitespace-pre-wrap font-normal break-words">
                     {node.notes}
                   </p>
                 </div>
@@ -368,7 +349,7 @@ export const BucketCard: React.FC<BucketCardProps> = ({
           
           {/* Allocated Balance */}
           <div className="text-right">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+            <span className="text-[10px] font-bold text-[#2E2E2C]/70 uppercase tracking-wider block">
               {hasChildren ? 'Total Allocated' : 'Allocated Fund'}
             </span>
 
@@ -378,21 +359,21 @@ export const BucketCard: React.FC<BucketCardProps> = ({
                   value={node.allocated ?? 0}
                   onChangeValue={(newVal, sessionKey) => onQuickUpdateAllocation(node.id, newVal, sessionKey)}
                   liveHistoryKey={`alloc:${node.id}`}
-                  className="w-20 sm:w-24 focus:w-40 text-right text-xs font-bold text-emerald-800 bg-white border border-slate-300 rounded px-1.5 py-0.5 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                  className="w-20 sm:w-24 focus:w-40 text-right text-xs font-bold text-[#1A1A18] bg-[#F0EDE5] border border-[#C5C3BE] rounded px-1.5 py-0.5 focus:border-[#1A1A18] focus:ring-1 focus:ring-[#1A1A18] focus:outline-none tabular-nums"
                   placeholder="0"
                   title="Allocated fund — supports PEMDAS math, e.g. (1+1-500+3)/6"
                 />
               </div>
             ) : (
-              <div className="text-sm font-extrabold text-emerald-800">
+              <div className="text-sm font-extrabold text-[#1A1A18] tabular-nums">
                 {totals.allocatedTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </div>
             )}
           </div>
 
           {/* Dedicated Fees Input */}
-          <div className="text-right border-l border-slate-200 pl-3">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+          <div className="text-right border-l border-[#C5C3BE] pl-3">
+            <span className="text-[10px] font-bold text-[#2E2E2C]/70 uppercase tracking-wider block">
               Dedicated Fee
             </span>
             <div className="flex items-center gap-1 justify-end">
@@ -400,7 +381,7 @@ export const BucketCard: React.FC<BucketCardProps> = ({
                 value={node.fee ?? 0}
                 onChangeValue={(newVal, sessionKey) => onQuickUpdateFee(node.id, newVal, sessionKey)}
                 liveHistoryKey={`fee:${node.id}`}
-                className="w-16 sm:w-20 focus:w-32 text-right text-xs font-medium text-amber-800 bg-white border border-slate-300 rounded px-1.5 py-0.5 focus:ring-1 focus:ring-amber-500 focus:outline-none"
+                className="w-16 sm:w-20 focus:w-32 text-right text-xs font-medium text-[#2E2E2C] bg-[#F0EDE5] border border-[#C5C3BE] rounded px-1.5 py-0.5 focus:border-[#1A1A18] focus:ring-1 focus:ring-[#1A1A18] focus:outline-none tabular-nums"
                 placeholder="0"
                 title="Dedicated fee — supports PEMDAS math, e.g. 50*1.05"
               />
@@ -408,18 +389,15 @@ export const BucketCard: React.FC<BucketCardProps> = ({
           </div>
 
           {/* Action Buttons Toolbar */}
-          <div className="flex items-center gap-1 border-l border-slate-200 pl-2">
+          <div className="flex items-center gap-1 border-l border-[#C5C3BE] pl-2">
             {/* Can add child bucket if level < 3 */}
             {node.level < 3 && (
               <button
                 onClick={() => onAddChildBucket(node)}
-                className="inline-flex items-center gap-1 px-2 py-1 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-medium rounded-md transition-colors cursor-pointer"
+                className="inline-flex items-center px-2 py-1 bg-[#1A1A18] hover:bg-[#2E2E2C] text-[#F0EDE5] text-[11px] font-medium rounded-md transition-colors cursor-pointer"
                 title={`Add Sub-bucket inside ${node.name}`}
               >
-                <Plus className="w-3 h-3" />
-                <span className="hidden sm:inline">
-                  + Sub
-                </span>
+                + Sub
               </button>
             )}
 
@@ -428,8 +406,8 @@ export const BucketCard: React.FC<BucketCardProps> = ({
               onClick={() => onToggleMuteBucket(node.id)}
               className={`p-1.5 rounded-md transition-colors cursor-pointer ${
                 node.isMuted
-                  ? 'text-amber-700 bg-amber-100 hover:bg-amber-200'
-                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200/70'
+                  ? 'text-[#F0EDE5] bg-[#2E2E2C] hover:bg-[#1A1A18]'
+                  : 'text-[#2E2E2C] hover:text-[#1A1A18] hover:bg-[#C5C3BE]/45'
               }`}
               title={node.isMuted ? 'Unmute bucket (include in calculations)' : 'Mute bucket (exclude from calculations)'}
             >
@@ -439,7 +417,7 @@ export const BucketCard: React.FC<BucketCardProps> = ({
             {/* Quick Transfer Funds */}
             <button
               onClick={() => onOpenTransferModal(node)}
-              className="p-1.5 text-slate-500 hover:text-emerald-700 hover:bg-slate-200/70 rounded-md transition-colors cursor-pointer"
+              className="p-1.5 text-[#2E2E2C] hover:text-[#1A1A18] hover:bg-[#C5C3BE]/45 rounded-md transition-colors cursor-pointer"
               title="Transfer funds to another bucket"
             >
               <ArrowRightLeft className="w-3.5 h-3.5" />
@@ -448,7 +426,7 @@ export const BucketCard: React.FC<BucketCardProps> = ({
             {/* Full Inspector Modal */}
             <button
               onClick={() => onOpenInspector(node)}
-              className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-200/70 rounded-md transition-colors cursor-pointer"
+              className="p-1.5 text-[#2E2E2C] hover:text-[#1A1A18] hover:bg-[#C5C3BE]/45 rounded-md transition-colors cursor-pointer"
               title="Inspect & edit full notes/rules"
             >
               <Edit3 className="w-3.5 h-3.5" />
@@ -457,7 +435,7 @@ export const BucketCard: React.FC<BucketCardProps> = ({
             {/* Delete Bucket */}
             <button
               onClick={() => onDeleteBucket(node.id)}
-              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
+              className="p-1.5 text-[#2E2E2C]/75 hover:text-[#1A1A18] hover:bg-[#C5C3BE]/45 rounded-md transition-colors cursor-pointer"
               title="Delete this bucket"
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -474,7 +452,7 @@ export const BucketCard: React.FC<BucketCardProps> = ({
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="mt-3 space-y-2 border-l-2 border-slate-300/80 pl-1 sm:pl-2 pr-1"
+            className="mt-3 space-y-2 border-l-2 border-[#C5C3BE] pl-1 sm:pl-2 pr-1"
           >
             {node.children!.map((child) => (
               <BucketCard
@@ -502,13 +480,13 @@ export const BucketCard: React.FC<BucketCardProps> = ({
       {/* Bottom Drop Indicator Line */}
       {dropPosition === 'after' && (
         <div className="absolute -bottom-2 left-0 right-0 z-30 flex items-center gap-2 pointer-events-none">
-          <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-sm" />
-          <div className="h-1 flex-1 bg-emerald-500 rounded-full shadow-sm" />
-          <span className="text-[10px] font-extrabold bg-emerald-600 text-white px-2.5 py-0.5 rounded-full shadow-sm">
-            Place After "{node.name}"
+          <div className="h-2.5 w-2.5 rounded-full bg-[#1A1A18] shadow-sm" />
+          <div className="h-1 flex-1 bg-[#1A1A18] rounded-full shadow-sm" />
+          <span className="text-[10px] font-extrabold bg-[#1A1A18] text-[#F0EDE5] px-2.5 py-0.5 rounded-full shadow-sm">
+            Place After &ldquo;{node.name}&rdquo;
           </span>
-          <div className="h-1 flex-1 bg-emerald-500 rounded-full shadow-sm" />
-          <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-sm" />
+          <div className="h-1 flex-1 bg-[#1A1A18] rounded-full shadow-sm" />
+          <div className="h-2.5 w-2.5 rounded-full bg-[#1A1A18] shadow-sm" />
         </div>
       )}
     </motion.div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { BucketNode } from '../types';
 import { BucketCard } from './BucketCard';
-import { Search, PlusCircle, Layers, FolderOutput } from 'lucide-react';
+import { Search, FolderOutput } from 'lucide-react';
 
 interface BucketTreeProps {
   buckets: BucketNode[];
@@ -133,32 +133,32 @@ export const BucketTree: React.FC<BucketTreeProps> = ({
   return (
     <div className="space-y-4 text-left">
       {/* Top Search & Controls Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#F0EDE5] p-3 rounded-xl border border-[#C5C3BE]">
         
         {/* Search Input */}
         <div className="relative flex-1 w-full">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[#2E2E2C]/65 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Filter buckets by name or notes..."
-            className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full pl-9 pr-3 py-1.5 bg-[#C5C3BE]/20 border border-[#C5C3BE] rounded-lg text-xs font-medium text-[#1A1A18] placeholder:text-[#2E2E2C]/60 focus:outline-none focus:ring-2 focus:ring-[#1A1A18]"
           />
         </div>
 
         {/* Level Statistics & Controls */}
         <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
-          <div className="hidden lg:flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 px-2">
-            <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full border border-slate-200">
+          <div className="hidden lg:flex items-center gap-1.5 text-[11px] font-semibold text-[#2E2E2C] px-2 tabular-nums">
+            <span className="bg-[#1A1A18] text-[#F0EDE5] px-2 py-0.5 rounded-full">
               {level1Count} Root
             </span>
-            <span>›</span>
-            <span className="bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">
+            <span className="text-[#2E2E2C]/60">›</span>
+            <span className="bg-[#2E2E2C] text-[#F0EDE5] px-2 py-0.5 rounded-full">
               {level2Count} Sub
             </span>
-            <span>›</span>
-            <span className="bg-amber-50 text-amber-800 px-2 py-0.5 rounded-full border border-amber-200">
+            <span className="text-[#2E2E2C]/60">›</span>
+            <span className="bg-[#C5C3BE]/50 text-[#1A1A18] px-2 py-0.5 rounded-full border border-[#C5C3BE]">
               {level3Count} Sub-Sub
             </span>
           </div>
@@ -166,13 +166,13 @@ export const BucketTree: React.FC<BucketTreeProps> = ({
           <div className="flex items-center gap-1">
             <button
               onClick={expandAll}
-              className="text-xs font-medium text-slate-600 hover:text-slate-900 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+              className="text-xs font-medium text-[#2E2E2C] hover:text-[#1A1A18] px-2.5 py-1.5 bg-[#C5C3BE]/30 hover:bg-[#C5C3BE]/55 rounded-lg transition-colors cursor-pointer"
             >
               Expand All
             </button>
             <button
               onClick={collapseAll}
-              className="text-xs font-medium text-slate-600 hover:text-slate-900 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+              className="text-xs font-medium text-[#2E2E2C] hover:text-[#1A1A18] px-2.5 py-1.5 bg-[#C5C3BE]/30 hover:bg-[#C5C3BE]/55 rounded-lg transition-colors cursor-pointer"
             >
               Collapse All
             </button>
@@ -209,31 +209,27 @@ export const BucketTree: React.FC<BucketTreeProps> = ({
             onDrop={handleRootDrop}
             className={`mt-4 p-3 rounded-xl border-2 border-dashed text-center transition-colors ${
               isRootDragOver
-                ? 'border-indigo-500 bg-indigo-50/80 text-indigo-900'
-                : 'border-slate-200 bg-slate-50/50 text-slate-400 hover:border-slate-300'
+                ? 'border-[#1A1A18] bg-[#C5C3BE]/45 text-[#1A1A18]'
+                : 'border-[#C5C3BE] bg-[#C5C3BE]/15 text-[#2E2E2C] hover:border-[#2E2E2C]/60'
             }`}
           >
             <div className="flex items-center justify-center gap-2 text-xs font-semibold">
-              <FolderOutput className="w-4 h-4 text-indigo-600" />
+              <FolderOutput className="w-4 h-4 text-[#2E2E2C]" />
               <span>Drag sub-bucket here to promote to Top-Level Root</span>
             </div>
           </div>
         </div>
       ) : (
-        <div className="text-center py-12 bg-white rounded-xl border border-dashed border-slate-300 p-6">
-          <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
-            <Layers className="w-6 h-6" />
-          </div>
-          <h3 className="text-sm font-bold text-slate-800">No buckets matching filter</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-4">
+        <div className="text-center py-12 bg-[#F0EDE5] rounded-xl border border-dashed border-[#C5C3BE] p-6">
+          <h3 className="text-sm font-bold text-[#1A1A18]">No buckets matching filter</h3>
+          <p className="text-xs text-[#2E2E2C]/80 max-w-sm mx-auto mt-1 mb-4">
             Create a root bucket to start structuring your 3-tier financial allocation tree.
           </p>
           <button
             onClick={onAddRootBucket}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+            className="inline-flex items-center px-4 py-2 bg-[#1A1A18] text-[#F0EDE5] text-xs font-semibold rounded-lg hover:bg-[#2E2E2C] transition-colors cursor-pointer"
           >
-            <PlusCircle className="w-4 h-4" />
-            <span>Create First Root Bucket</span>
+            + Create First Root Bucket
           </button>
         </div>
       )}

@@ -1,0 +1,24 @@
+# Bucket Budget — Rules & Token-Efficiency Spec
+
+## 1. Styling & UI Rules
+- **Palette (4 neutrals + 1 accent only)**:
+  - Lightest: `#F0EDE5` (canvas, header, L1 cards, inputs, modals, primary button ink)
+  - Lighter mid: `#C5C3BE` (borders, L2 `bg-[#C5C3BE]/22` & L3 `bg-[#C5C3BE]/40` surfaces, unallocated bar, disabled text)
+  - Darker mid: `#2E2E2C` (secondary text, labels, icons, L3 headings, fees bar segment, primary hover)
+  - Darkest: `#1A1A18` (headings, ink, primary buttons, modal headers, tooltips, drop lines, focus rings)
+  - Single accent: `#ed3f1c` **ONLY** on the allocated segment (and legend dot) of the pool allocation bar (`HeaderPoolBar.tsx`).
+  - No `emerald`, `amber`, `rose`, `indigo`, `slate`, `bg-white`, `text-white`.
+- **Font**: `Inter` everywhere (`index.html` + `src/index.css` `--font-sans` & `--font-mono`). Use `tabular-nums`, never `font-mono`.
+- **Icons & Buttons**: No app icon (`Wallet`), no bucket icons (`Layers`, `Layers3`, `Tag`). Addition buttons are text-only `"+ Action"` (`+ Root Bucket`, `+ Sub`, `+ Create First Root Bucket`) — never `[icon] + Action`.
+
+## 2. Core Invariants & Map
+- **State & Undo/Redo**: All persistent mutations go through `commitChange` (`src/hooks/useBudgetHistory.ts`) with `liveHistoryKey` coalescing on live `MathInput` fields.
+- **3-Tier Cap & Leaf Explosion**: Max depth `1 | 2 | 3`. Adding a first child via `addChildBucketToTree(..., true)` moves parent `allocated` into the new child and sets parent `allocated` to `0`.
+- **Key Files**: `src/App.tsx` (root/shortcuts/autosave), `src/hooks/useBudgetHistory.ts`, `src/utils/budgetCalculations.ts`, `src/utils/mathParser.ts`, `src/utils/storage.ts`, `src/components/{HeaderPoolBar,BucketTree,BucketCard,MathInput,BucketModal,QuickTransferModal}.tsx`.
+
+## 3. Token-Efficiency Protocol
+- **Use the file map above** before listing directories; never read `package-lock.json`, `bun.lock`, `dist/`, `node_modules/`, or `*.png`.
+- **Read whole `src/` files once** (all are <520 lines); never page in small chunks.
+- **Edit surgically** with `replace_file_content`/`multi_replace_file_content`; batch independent reads/edits in parallel.
+- **Verify once at the end**: run `npm run lint`, `npm run build`, and `grep -rnE "emerald|amber|rose|indigo|slate|bg-white|text-white|font-mono|PlusCircle|Wallet" src/`.
+- **Be terse**: no tool narration, no echoed files, short bulleted completion summaries only.

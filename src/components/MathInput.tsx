@@ -199,21 +199,21 @@ export const MathInput: React.FC<MathInputProps> = ({
               inputRef.current?.blur();
             }
           }}
-          className={`absolute right-0 top-full mt-1 z-50 px-2 py-1 rounded-md text-[11px] font-mono shadow-md border flex items-center gap-1.5 whitespace-nowrap cursor-pointer select-none transition-all duration-100 ${
+          className={`absolute right-0 top-full mt-1 z-50 px-2 py-1 rounded-md text-[11px] tabular-nums shadow-md border flex items-center gap-1.5 whitespace-nowrap cursor-pointer select-none transition-all duration-100 ${
             liveEval && liveEval.success
-              ? 'bg-slate-900 text-emerald-300 border-slate-700 hover:bg-slate-800'
-              : 'bg-amber-900/90 text-amber-200 border-amber-700'
+              ? 'bg-[#1A1A18] text-[#F0EDE5] border-[#2E2E2C] hover:bg-[#2E2E2C]'
+              : 'bg-[#2E2E2C] text-[#F0EDE5] border-[#1A1A18]'
           }`}
           title="Click or press Enter to apply calculated result"
         >
-          <Calculator className="w-3 h-3 text-emerald-400 shrink-0" />
+          <Calculator className="w-3 h-3 text-[#C5C3BE] shrink-0" />
           {liveEval && liveEval.success ? (
             <span>
-              = <strong className="text-white font-bold">{liveEval.value}</strong>
-              <span className="text-[9px] text-slate-400 ml-1 font-sans">(Press Enter)</span>
+              = <strong className="text-[#F0EDE5] font-bold">{liveEval.value}</strong>
+              <span className="text-[9px] text-[#C5C3BE] ml-1">(Press Enter)</span>
             </span>
           ) : (
-            <span className="text-[10px] text-amber-300 font-sans">
+            <span className="text-[10px] text-[#C5C3BE]">
               {liveEval?.error || 'Typing math...'}
             </span>
           )}
